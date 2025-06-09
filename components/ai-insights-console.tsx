@@ -1,34 +1,48 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Brain, Download, FileText, Search, Send } from "lucide-react"
-import Link from "next/link"
-import { AIChart } from "@/components/ai-chart"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Brain,
+  Download,
+  FileText,
+  Search,
+  Send,
+} from "lucide-react";
+import Link from "next/link";
+import { AIChart } from "@/components/ai-chart";
 
 export function AIInsightsConsole() {
-  const { toast } = useToast()
-  const [query, setQuery] = useState("")
+  const { toast } = useToast();
+  const [query, setQuery] = useState("");
 
   const handleQuery = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (query.trim()) {
       toast({
         title: "Query submitted",
         description: "Processing your query: " + query,
-      })
-      setQuery("")
+      });
+      setQuery("");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -42,8 +56,12 @@ export function AIInsightsConsole() {
       </div>
 
       <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">AI Insights Console</h1>
-        <p className="text-muted-foreground">Advanced analytics and insights from the ISAAC AI system.</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          AI Insights Console
+        </h1>
+        <p className="text-muted-foreground">
+          Advanced analytics and insights from the ISAAC AI system.
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -61,7 +79,9 @@ export function AIInsightsConsole() {
                 </Badge>
               </div>
               <Progress value={98} className="h-2" />
-              <p className="text-xs text-muted-foreground">All AI subsystems operating at optimal levels</p>
+              <p className="text-xs text-muted-foreground">
+                All AI subsystems operating at optimal levels
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -82,7 +102,9 @@ export function AIInsightsConsole() {
                 <h4 className="text-sm font-medium">Model Version</h4>
                 <Badge variant="outline">v3.2.1</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Last updated: April 20, 2025</p>
+              <p className="text-xs text-muted-foreground">
+                Last updated: April 20, 2025
+              </p>
             </div>
 
             <Separator />
@@ -143,7 +165,9 @@ export function AIInsightsConsole() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>AI Performance Analytics</CardTitle>
-            <CardDescription>System-wide performance metrics over time</CardDescription>
+            <CardDescription>
+              System-wide performance metrics over time
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="accuracy">
@@ -170,8 +194,9 @@ export function AIInsightsConsole() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  The AI system maintains high accuracy across all categories, with vehicle detection being the most
-                  accurate at 94%. Context analysis shows the most room for improvement at 82%.
+                  The AI system maintains high accuracy across all categories,
+                  with vehicle detection being the most accurate at 94%. Context
+                  analysis shows the most room for improvement at 82%.
                 </p>
               </TabsContent>
 
@@ -185,8 +210,9 @@ export function AIInsightsConsole() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Processing times have steadily improved over the past 6 months, with the current average processing
-                  time at 3.2 minutes per incident report.
+                  Processing times have steadily improved over the past 6
+                  months, with the current average processing time at 3.2
+                  minutes per incident report.
                 </p>
               </TabsContent>
 
@@ -195,13 +221,18 @@ export function AIInsightsConsole() {
                   <AIChart
                     title="Confidence Score Distribution"
                     type="pie"
-                    categories={["High (90%+)", "Medium (70-89%)", "Low (<70%)"]}
+                    categories={[
+                      "High (90%+)",
+                      "Medium (70-89%)",
+                      "Low (<70%)",
+                    ]}
                     data={[68, 27, 5]}
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  68% of all AI reports are generated with high confidence (90% or higher), while only 5% have low
-                  confidence scores requiring additional human review.
+                  68% of all AI reports are generated with high confidence (90%
+                  or higher), while only 5% have low confidence scores requiring
+                  additional human review.
                 </p>
               </TabsContent>
 
@@ -215,8 +246,9 @@ export function AIInsightsConsole() {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  The number of reports processed by the AI system has been steadily increasing, with a 71% increase in
-                  volume over the past 6 months.
+                  The number of reports processed by the AI system has been
+                  steadily increasing, with a 71% increase in volume over the
+                  past 6 months.
                 </p>
               </TabsContent>
             </Tabs>
@@ -227,7 +259,10 @@ export function AIInsightsConsole() {
       <Card>
         <CardHeader>
           <CardTitle>AI Query Interface</CardTitle>
-          <CardDescription>Ask the AI system questions about incidents, trends, or specific reports</CardDescription>
+          <CardDescription>
+            Ask the AI system questions about incidents, trends, or specific
+            reports
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleQuery} className="flex items-center space-x-2">
@@ -251,9 +286,12 @@ export function AIInsightsConsole() {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <Brain className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Ask the AI system a question to see results here</p>
+                <p className="text-sm text-muted-foreground">
+                  Ask the AI system a question to see results here
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Example: "Show me trends in vehicle collisions over the past 6 months"
+                  Example: &apos;Show me trends in vehicle collisions over the
+                  past 6 months&apos;
                 </p>
               </div>
             </div>
@@ -265,21 +303,41 @@ export function AIInsightsConsole() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setQuery("What are the most common causes of accidents this month?")}
+                onClick={() =>
+                  setQuery(
+                    "What are the most common causes of accidents this month?"
+                  )
+                }
               >
                 Common accident causes
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setQuery("Show incident hotspots on Highway 101")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setQuery("Show incident hotspots on Highway 101")
+                }
+              >
                 Incident hotspots
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setQuery("Compare vehicle detection accuracy between day and night incidents")}
+                onClick={() =>
+                  setQuery(
+                    "Compare vehicle detection accuracy between day and night incidents"
+                  )
+                }
               >
                 Day vs. night accuracy
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setQuery("Identify trends in pedestrian incidents")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setQuery("Identify trends in pedestrian incidents")
+                }
+              >
                 Pedestrian incident trends
               </Button>
             </div>
@@ -291,7 +349,9 @@ export function AIInsightsConsole() {
         <Card>
           <CardHeader>
             <CardTitle>Recent AI Reports</CardTitle>
-            <CardDescription>Latest reports generated by the AI system</CardDescription>
+            <CardDescription>
+              Latest reports generated by the AI system
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
@@ -320,7 +380,10 @@ export function AIInsightsConsole() {
                 time: "3 hours ago",
               },
             ].map((report) => (
-              <div key={report.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={report.id}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div className="flex flex-col">
                   <div className="flex items-center space-x-2">
                     <h4 className="text-sm font-medium">#{report.id}</h4>
@@ -334,11 +397,15 @@ export function AIInsightsConsole() {
                         }
                       `}
                     >
-                      {report.confidence === "high" ? "High Confidence" : "Medium Confidence"}
+                      {report.confidence === "high"
+                        ? "High Confidence"
+                        : "Medium Confidence"}
                     </Badge>
                   </div>
                   <p className="text-sm">{report.title}</p>
-                  <p className="text-xs text-muted-foreground">Generated: {report.time}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Generated: {report.time}
+                  </p>
                 </div>
                 <Button size="sm" variant="outline" asChild>
                   <Link href={`/dashboard/chief/ai-insights/${report.id}`}>
@@ -359,17 +426,23 @@ export function AIInsightsConsole() {
         <Card>
           <CardHeader>
             <CardTitle>System Insights</CardTitle>
-            <CardDescription>AI-generated insights and recommendations</CardDescription>
+            <CardDescription>
+              AI-generated insights and recommendations
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 p-3 border rounded-lg">
               <div className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-primary" />
-                <h4 className="text-sm font-medium">Incident Hotspot Detected</h4>
+                <h4 className="text-sm font-medium">
+                  Incident Hotspot Detected
+                </h4>
               </div>
               <p className="text-sm">
-                The AI system has identified a significant increase in incidents at the intersection of Main St and Oak
-                Ave. Analysis suggests this may be related to recent construction and changed traffic patterns.
+                The AI system has identified a significant increase in incidents
+                at the intersection of Main St and Oak Ave. Analysis suggests
+                this may be related to recent construction and changed traffic
+                patterns.
               </p>
               <Button size="sm" variant="outline" className="w-full mt-2">
                 View Detailed Analysis
@@ -379,11 +452,15 @@ export function AIInsightsConsole() {
             <div className="space-y-2 p-3 border rounded-lg">
               <div className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-primary" />
-                <h4 className="text-sm font-medium">Pattern Recognition Alert</h4>
+                <h4 className="text-sm font-medium">
+                  Pattern Recognition Alert
+                </h4>
               </div>
               <p className="text-sm">
-                The AI system has detected a 27% increase in rear-end collisions during morning rush hour (7-9 AM) over
-                the past month. Contributing factors appear to be increased traffic volume and distracted driving.
+                The AI system has detected a 27% increase in rear-end collisions
+                during morning rush hour (7-9 AM) over the past month.
+                Contributing factors appear to be increased traffic volume and
+                distracted driving.
               </p>
               <Button size="sm" variant="outline" className="w-full mt-2">
                 View Detailed Analysis
@@ -393,11 +470,14 @@ export function AIInsightsConsole() {
             <div className="space-y-2 p-3 border rounded-lg">
               <div className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-primary" />
-                <h4 className="text-sm font-medium">System Improvement Recommendation</h4>
+                <h4 className="text-sm font-medium">
+                  System Improvement Recommendation
+                </h4>
               </div>
               <p className="text-sm">
-                Based on recent performance metrics, the AI system recommends additional training data for the Context
-                Analysis module to improve accuracy in low-light conditions.
+                Based on recent performance metrics, the AI system recommends
+                additional training data for the Context Analysis module to
+                improve accuracy in low-light conditions.
               </p>
               <Button size="sm" variant="outline" className="w-full mt-2">
                 View Recommendation Details
@@ -413,5 +493,5 @@ export function AIInsightsConsole() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
