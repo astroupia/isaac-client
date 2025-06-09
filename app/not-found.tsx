@@ -1,38 +1,44 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Home, Search, RefreshCw, AlertTriangle } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  ArrowLeft,
+  Home,
+  Search,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function NotFound() {
-  const router = useRouter()
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [glitchText, setGlitchText] = useState("404")
+  const router = useRouter();
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [glitchText, setGlitchText] = useState("404");
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const glitchChars = ["4", "0", "4", "█", "▓", "▒", "░"]
+      const glitchChars = ["4", "0", "4", "█", "▓", "▒", "░"];
       const randomText = Array.from(
         { length: 3 },
-        () => glitchChars[Math.floor(Math.random() * glitchChars.length)],
-      ).join("")
+        () => glitchChars[Math.floor(Math.random() * glitchChars.length)]
+      ).join("");
 
-      setGlitchText(randomText)
-      setTimeout(() => setGlitchText("404"), 100)
-    }, 3000)
+      setGlitchText(randomText);
+      setTimeout(() => setGlitchText("404"), 100);
+    }, 3000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRefresh = () => {
-    setIsAnimating(true)
+    setIsAnimating(true);
     setTimeout(() => {
-      window.location.reload()
-    }, 1000)
-  }
+      window.location.reload();
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
@@ -48,7 +54,9 @@ export default function NotFound() {
             <div className="text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-purple-500 animate-pulse">
               {glitchText}
             </div>
-            <div className="absolute inset-0 text-9xl font-black text-primary/10 blur-sm">404</div>
+            <div className="absolute inset-0 text-9xl font-black text-primary/10 blur-sm">
+              404
+            </div>
           </div>
 
           {/* Error Icon with Animation */}
@@ -67,7 +75,8 @@ export default function NotFound() {
               Page Not Found
             </h1>
             <p className="text-xl text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Oops! The page you're looking for seems to have vanished into the digital void.
+              Oops! The page you&apos;re looking for seems to have vanished into
+              the digital void.
             </p>
           </div>
 
@@ -105,12 +114,19 @@ export default function NotFound() {
                 disabled={isAnimating}
               >
                 <RefreshCw
-                  className={`mr-2 h-5 w-5 transition-transform ${isAnimating ? "animate-spin" : "group-hover:rotate-180"}`}
+                  className={`mr-2 h-5 w-5 transition-transform ${
+                    isAnimating ? "animate-spin" : "group-hover:rotate-180"
+                  }`}
                 />
                 {isAnimating ? "Refreshing..." : "Refresh Page"}
               </Button>
 
-              <Button variant="ghost" size="lg" className="group hover:bg-muted/50 transition-all duration-300" asChild>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="group hover:bg-muted/50 transition-all duration-300"
+                asChild
+              >
                 <Link href="/dashboard">
                   <Search className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                   Search Dashboard
@@ -122,7 +138,8 @@ export default function NotFound() {
           {/* Help Text */}
           <div className="pt-8 border-t border-border/50">
             <p className="text-sm text-muted-foreground">
-              If you believe this is an error, please contact support or try refreshing the page.
+              If you believe this is an error, please contact support or try
+              refreshing the page.
             </p>
           </div>
 
@@ -133,5 +150,5 @@ export default function NotFound() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

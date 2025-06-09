@@ -4,6 +4,7 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -105,7 +106,7 @@ function DashboardSidebar({ role }: { role: string }) {
                   : "hover:bg-accent/50"
               }`}
             >
-              <a
+              <Link
                 href={`/dashboard/${role}`}
                 className="flex items-center space-x-3 px-3 py-2"
               >
@@ -115,7 +116,7 @@ function DashboardSidebar({ role }: { role: string }) {
                   pathname === `/dashboard/${role}` && (
                     <div className="absolute right-2 h-2 w-2 bg-primary-foreground rounded-full"></div>
                   )}
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -132,14 +133,14 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/traffic/new-incident"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
                     <AlertTriangle className="h-5 w-5 transition-transform group-hover:scale-110" />
                     <span className="font-medium">New Incident</span>
                     <Zap className="h-3 w-3 text-orange-500 ml-auto" />
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -152,7 +153,7 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/traffic/reports"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
@@ -164,7 +165,7 @@ function DashboardSidebar({ role }: { role: string }) {
                     >
                       3
                     </Badge>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </>
@@ -183,7 +184,7 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/investigator/cases"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
@@ -195,7 +196,7 @@ function DashboardSidebar({ role }: { role: string }) {
                     >
                       5
                     </Badge>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -208,14 +209,14 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/investigator/ai-reports"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
                     <Brain className="h-5 w-5 transition-transform group-hover:scale-110" />
                     <span className="font-medium">AI Reports</span>
                     <div className="ml-auto h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </>
@@ -234,7 +235,7 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/chief/assign"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
@@ -246,7 +247,7 @@ function DashboardSidebar({ role }: { role: string }) {
                     >
                       7
                     </Badge>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -259,13 +260,13 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/chief/reports"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
                     <FileText className="h-5 w-5 transition-transform group-hover:scale-110" />
                     <span className="font-medium">Final Reports</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -278,14 +279,14 @@ function DashboardSidebar({ role }: { role: string }) {
                       : "hover:bg-accent/50"
                   }`}
                 >
-                  <a
+                  <Link
                     href="/dashboard/chief/ai-insights"
                     className="flex items-center space-x-3 px-3 py-2"
                   >
                     <Brain className="h-5 w-5 transition-transform group-hover:scale-110" />
                     <span className="font-medium">AI Insights</span>
                     <div className="ml-auto h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </>
@@ -304,13 +305,13 @@ function DashboardSidebar({ role }: { role: string }) {
                   : "hover:bg-accent/50"
               }`}
             >
-              <a
+              <Link
                 href={`/dashboard/${role}/report-center`}
                 className="flex items-center space-x-3 px-3 py-2"
               >
                 <BarChart3 className="h-5 w-5 transition-transform group-hover:scale-110" />
                 <span className="font-medium">Report Center</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -324,13 +325,13 @@ function DashboardSidebar({ role }: { role: string }) {
                   : "hover:bg-accent/50"
               }`}
             >
-              <a
+              <Link
                 href={`/dashboard/${role}/settings`}
                 className="flex items-center space-x-3 px-3 py-2"
               >
                 <Settings className="h-5 w-5 transition-transform group-hover:scale-110" />
                 <span className="font-medium">Settings</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -344,10 +345,10 @@ function DashboardSidebar({ role }: { role: string }) {
               tooltip="Logout"
               className="group hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
             >
-              <a href="/" className="flex items-center space-x-3 px-3 py-2">
+              <Link href="/" className="flex items-center space-x-3 px-3 py-2">
                 <LogOut className="h-5 w-5 transition-transform group-hover:scale-110" />
                 <span className="font-medium">Logout</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

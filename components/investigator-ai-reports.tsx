@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import {
   Brain,
   Search,
@@ -18,9 +30,9 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-} from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 const aiReports = [
   {
@@ -88,21 +100,24 @@ const aiReports = [
     processingTime: "1.9s",
     type: "intersection",
   },
-]
+];
 
 export function InvestigatorAIReports() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
 
   const filteredReports = aiReports.filter((report) => {
     const matchesSearch =
-      report.title.toLowerCase().includes(searchTerm.toLowerCase()) || report.id.includes(searchTerm)
-    const matchesStatus = statusFilter === "all" || report.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || report.priority === priorityFilter
+      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id.includes(searchTerm);
+    const matchesStatus =
+      statusFilter === "all" || report.status === statusFilter;
+    const matchesPriority =
+      priorityFilter === "all" || report.priority === priorityFilter;
 
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -112,50 +127,66 @@ export function InvestigatorAIReports() {
             <CheckCircle className="h-3 w-3 mr-1" />
             Completed
           </Badge>
-        )
+        );
       case "processing":
         return (
           <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
             <Clock className="h-3 w-3 mr-1" />
             Processing
           </Badge>
-        )
+        );
       case "reviewed":
         return (
           <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20">
             <Eye className="h-3 w-3 mr-1" />
             Reviewed
           </Badge>
-        )
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>;
     }
-  }
+  };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">High</Badge>
+        return (
+          <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+            High
+          </Badge>
+        );
       case "medium":
-        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Medium</Badge>
+        return (
+          <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+            Medium
+          </Badge>
+        );
       case "low":
-        return <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20">Low</Badge>
+        return (
+          <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20">
+            Low
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{priority}</Badge>
+        return <Badge variant="outline">{priority}</Badge>;
     }
-  }
+  };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return "text-green-500"
-    if (confidence >= 80) return "text-orange-500"
-    return "text-red-500"
-  }
+    if (confidence >= 90) return "text-green-500";
+    if (confidence >= 80) return "text-orange-500";
+    return "text-red-500";
+  };
 
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-col space-y-2 w-full">
-        <h1 className="text-3xl font-bold tracking-tight">AI Analysis Reports</h1>
-        <p className="text-muted-foreground">Review and manage AI-generated incident analysis reports</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          AI Analysis Reports
+        </h1>
+        <p className="text-muted-foreground">
+          Review and manage AI-generated incident analysis reports
+        </p>
       </div>
 
       {/* Stats Overview */}
@@ -173,7 +204,9 @@ export function InvestigatorAIReports() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Confidence</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              High Confidence
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -199,7 +232,9 @@ export function InvestigatorAIReports() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Processing</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg. Processing
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -266,12 +301,17 @@ export function InvestigatorAIReports() {
         <TabsContent value="grid" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredReports.map((report) => (
-              <Card key={report.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={report.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <CardTitle className="text-lg">#{report.id}</CardTitle>
-                      <CardDescription className="font-medium">{report.title}</CardDescription>
+                      <CardDescription className="font-medium">
+                        {report.title}
+                      </CardDescription>
                     </div>
                     {getPriorityBadge(report.priority)}
                   </div>
@@ -279,7 +319,11 @@ export function InvestigatorAIReports() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     {getStatusBadge(report.status)}
-                    <div className={`text-sm font-medium ${getConfidenceColor(report.confidence)}`}>
+                    <div
+                      className={`text-sm font-medium ${getConfidenceColor(
+                        report.confidence
+                      )}`}
+                    >
                       {report.confidence}% confidence
                     </div>
                   </div>
@@ -310,7 +354,9 @@ export function InvestigatorAIReports() {
 
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1" asChild>
-                      <Link href={`/dashboard/investigator/ai-reports/${report.id}`}>
+                      <Link
+                        href={`/dashboard/investigator/ai-reports/${report.id}`}
+                      >
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Link>
@@ -328,7 +374,10 @@ export function InvestigatorAIReports() {
         <TabsContent value="list" className="space-y-4">
           <div className="space-y-4">
             {filteredReports.map((report) => (
-              <Card key={report.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={report.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -338,7 +387,9 @@ export function InvestigatorAIReports() {
                           {getPriorityBadge(report.priority)}
                           {getStatusBadge(report.status)}
                         </div>
-                        <p className="text-sm text-muted-foreground">{report.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {report.title}
+                        </p>
                         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                           <span className="flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
@@ -353,14 +404,23 @@ export function InvestigatorAIReports() {
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <div className={`text-sm font-medium ${getConfidenceColor(report.confidence)}`}>
+                        <div
+                          className={`text-sm font-medium ${getConfidenceColor(
+                            report.confidence
+                          )}`}
+                        >
                           {report.confidence}% confidence
                         </div>
-                        <Progress value={report.confidence} className="h-1 w-20 mt-1" />
+                        <Progress
+                          value={report.confidence}
+                          className="h-1 w-20 mt-1"
+                        />
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" asChild>
-                          <Link href={`/dashboard/investigator/ai-reports/${report.id}`}>
+                          <Link
+                            href={`/dashboard/investigator/ai-reports/${report.id}`}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View Report
                           </Link>
@@ -384,11 +444,12 @@ export function InvestigatorAIReports() {
             <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">No reports found</h3>
             <p className="text-muted-foreground">
-              Try adjusting your search criteria or filters to find the reports you're looking for.
+              Try adjusting your search criteria or filters to find the reports
+              you&apos;re looking for.
             </p>
           </CardContent>
         </Card>
       )}
     </div>
-  )
+  );
 }

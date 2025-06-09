@@ -1,37 +1,47 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Brain, FileText, User } from "lucide-react"
-import Link from "next/link"
-import { AssignmentBoard } from "@/components/assignment-board"
-import { AIInsightsSummary } from "@/components/ai-insights-summary"
-import { UnassignedCaseDialog } from "@/components/unassigned-case-dialog"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Brain, FileText, User } from "lucide-react";
+import Link from "next/link";
+import { AssignmentBoard } from "@/components/assignment-board";
+import { AIInsightsSummary } from "@/components/ai-insights-summary";
+import { UnassignedCaseDialog } from "@/components/unassigned-case-dialog";
 
 export function ChiefDashboard() {
   const [unassignedCaseDialog, setUnassignedCaseDialog] = useState({
     open: false,
     caseId: "",
     caseTitle: "",
-  })
+  });
 
   const handleOpenUnassignedCase = (caseId: string, caseTitle: string) => {
     setUnassignedCaseDialog({
       open: true,
       caseId,
       caseTitle,
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-col space-y-2 w-full">
-        <h1 className="text-3xl font-bold tracking-tight">Chief Analyst Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Chief Analyst Dashboard
+        </h1>
         <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your team's performance and pending assignments.
+          Welcome back! Here&apos;s an overview of your team&apos;s performance
+          and pending assignments.
         </p>
       </div>
 
@@ -49,7 +59,9 @@ export function ChiefDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Investigators</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Investigators
+            </CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -60,12 +72,16 @@ export function ChiefDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reports Pending Review</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Reports Pending Review
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Awaiting your approval</p>
+            <p className="text-xs text-muted-foreground">
+              Awaiting your approval
+            </p>
           </CardContent>
         </Card>
 
@@ -77,8 +93,12 @@ export function ChiefDashboard() {
             <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">24</div>
-            <p className="text-xs text-green-600/80 dark:text-green-400/80">+8 from last month</p>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              24
+            </div>
+            <p className="text-xs text-green-600/80 dark:text-green-400/80">
+              +8 from last month
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -124,14 +144,18 @@ export function ChiefDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Reports Pending Review</CardTitle>
-          <CardDescription>Final reports awaiting your approval</CardDescription>
+          <CardDescription>
+            Final reports awaiting your approval
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pending">Pending Review (3)</TabsTrigger>
               <TabsTrigger value="approved">Recently Approved (5)</TabsTrigger>
-              <TabsTrigger value="returned">Returned for Revision (2)</TabsTrigger>
+              <TabsTrigger value="returned">
+                Returned for Revision (2)
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="pending" className="mt-4 space-y-4">
               {[
@@ -157,7 +181,10 @@ export function ChiefDashboard() {
                   aiConfidence: "high",
                 },
               ].map((report) => (
-                <div key={report.id} className="flex flex-col space-y-2 p-3 border rounded-lg">
+                <div
+                  key={report.id}
+                  className="flex flex-col space-y-2 p-3 border rounded-lg"
+                >
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-medium">
                       #{report.id} - {report.title}
@@ -172,11 +199,14 @@ export function ChiefDashboard() {
                         }
                       `}
                     >
-                      {report.aiConfidence === "high" ? "High AI Confidence" : "Medium AI Confidence"}
+                      {report.aiConfidence === "high"
+                        ? "High AI Confidence"
+                        : "Medium AI Confidence"}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Investigator: {report.investigator} • Submitted: {report.date}
+                    Investigator: {report.investigator} • Submitted:{" "}
+                    {report.date}
                   </p>
                   <div className="flex items-center space-x-2 pt-1">
                     <Button size="sm" className="flex-1" asChild>
@@ -185,7 +215,12 @@ export function ChiefDashboard() {
                         Review Report
                       </Link>
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1" asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      asChild
+                    >
                       <Link href={`/dashboard/chief/ai-insights/${report.id}`}>
                         <Brain className="mr-2 h-4 w-4" />
                         View AI Analysis
@@ -196,10 +231,14 @@ export function ChiefDashboard() {
               ))}
             </TabsContent>
             <TabsContent value="approved" className="mt-4">
-              <div className="text-sm text-muted-foreground">Recently approved reports will appear here.</div>
+              <div className="text-sm text-muted-foreground">
+                Recently approved reports will appear here.
+              </div>
             </TabsContent>
             <TabsContent value="returned" className="mt-4">
-              <div className="text-sm text-muted-foreground">Reports returned for revision will appear here.</div>
+              <div className="text-sm text-muted-foreground">
+                Reports returned for revision will appear here.
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -208,7 +247,9 @@ export function ChiefDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Unassigned Cases</CardTitle>
-          <CardDescription>Cases that need to be assigned to investigators</CardDescription>
+          <CardDescription>
+            Cases that need to be assigned to investigators
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -232,12 +273,17 @@ export function ChiefDashboard() {
                 priority: "low",
               },
             ].map((caseItem) => (
-              <div key={caseItem.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={caseItem.id}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
                   <h4 className="text-sm font-medium">
                     #{caseItem.id} - {caseItem.title}
                   </h4>
-                  <p className="text-xs text-muted-foreground">Reported: {caseItem.date}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Reported: {caseItem.date}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Badge
@@ -247,18 +293,23 @@ export function ChiefDashboard() {
                         caseItem.priority === "high"
                           ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20"
                           : caseItem.priority === "medium"
-                            ? "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20"
-                            : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+                          ? "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20"
+                          : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
                       }
                     `}
                   >
                     {caseItem.priority === "high"
                       ? "High Priority"
                       : caseItem.priority === "medium"
-                        ? "Medium Priority"
-                        : "Low Priority"}
+                      ? "Medium Priority"
+                      : "Low Priority"}
                   </Badge>
-                  <Button size="sm" onClick={() => handleOpenUnassignedCase(caseItem.id, caseItem.title)}>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      handleOpenUnassignedCase(caseItem.id, caseItem.title)
+                    }
+                  >
                     Assign
                   </Button>
                 </div>
@@ -270,10 +321,12 @@ export function ChiefDashboard() {
 
       <UnassignedCaseDialog
         open={unassignedCaseDialog.open}
-        onOpenChange={(open) => setUnassignedCaseDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open) =>
+          setUnassignedCaseDialog((prev) => ({ ...prev, open }))
+        }
         caseId={unassignedCaseDialog.caseId}
         caseTitle={unassignedCaseDialog.caseTitle}
       />
     </div>
-  )
+  );
 }

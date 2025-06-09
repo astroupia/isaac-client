@@ -1,16 +1,34 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Brain, Camera, Car, Clock, Download, Eye, FileText, MapPin, Users, Zap } from "lucide-react"
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  Brain,
+  Camera,
+  Car,
+  Clock,
+  Download,
+  Eye,
+  FileText,
+  MapPin,
+  Users,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
 
 interface AIInsightsDetailProps {
-  incidentId: string
+  incidentId: string;
 }
 
 export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
@@ -25,7 +43,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">AI Analysis Report</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              AI Analysis Report
+            </h1>
             <p className="text-muted-foreground">Incident #{incidentId}</p>
           </div>
         </div>
@@ -44,29 +64,39 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vehicles Detected</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Vehicles Detected
+            </CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">2 cars, 1 motorcycle</p>
+            <p className="text-xs text-muted-foreground">
+              2 cars, 1 motorcycle
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">People Identified</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              People Identified
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">3 drivers, 2 pedestrians</p>
+            <p className="text-xs text-muted-foreground">
+              3 drivers, 2 pedestrians
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing Time</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Processing Time
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -138,7 +168,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                   <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                     <div className="text-center">
                       <MapPin className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Interactive Map View</p>
+                      <p className="text-sm text-muted-foreground">
+                        Interactive Map View
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2 text-sm">
@@ -147,7 +179,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                       <span>Main St & 5th Ave</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Coordinates:</span>
+                      <span className="text-muted-foreground">
+                        Coordinates:
+                      </span>
                       <span>37.7749, -122.4194</span>
                     </div>
                     <div className="flex justify-between">
@@ -163,16 +197,21 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
           <Card>
             <CardHeader>
               <CardTitle>Key Findings</CardTitle>
-              <CardDescription>AI-generated insights and observations</CardDescription>
+              <CardDescription>
+                AI-generated insights and observations
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
                   <div>
-                    <p className="font-medium">Primary Impact Point Identified</p>
+                    <p className="font-medium">
+                      Primary Impact Point Identified
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      AI detected the main collision occurred at the intersection's northeast corner, with Vehicle A
+                      AI detected the main collision occurred at the
+                      intersection&apos;s northeast corner, with Vehicle A
                       (sedan) striking Vehicle B (SUV) at approximately 35 mph.
                     </p>
                   </div>
@@ -182,8 +221,8 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                   <div>
                     <p className="font-medium">Traffic Signal Analysis</p>
                     <p className="text-sm text-muted-foreground">
-                      Signal timing data suggests Vehicle A may have entered intersection during yellow-to-red
-                      transition phase.
+                      Signal timing data suggests Vehicle A may have entered
+                      intersection during yellow-to-red transition phase.
                     </p>
                   </div>
                 </div>
@@ -192,8 +231,8 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                   <div>
                     <p className="font-medium">Pedestrian Safety</p>
                     <p className="text-sm text-muted-foreground">
-                      Two pedestrians were present but maintained safe distance from impact zone. No pedestrian
-                      involvement detected.
+                      Two pedestrians were present but maintained safe distance
+                      from impact zone. No pedestrian involvement detected.
                     </p>
                   </div>
                 </div>
@@ -220,7 +259,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Car className="h-5 w-5 text-blue-500" />
                         <div>
                           <p className="font-medium">Vehicle A - Sedan</p>
-                          <p className="text-xs text-muted-foreground">Blue Honda Civic</p>
+                          <p className="text-xs text-muted-foreground">
+                            Blue Honda Civic
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">98% confidence</Badge>
@@ -230,7 +271,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Car className="h-5 w-5 text-green-500" />
                         <div>
                           <p className="font-medium">Vehicle B - SUV</p>
-                          <p className="text-xs text-muted-foreground">White Toyota RAV4</p>
+                          <p className="text-xs text-muted-foreground">
+                            White Toyota RAV4
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">96% confidence</Badge>
@@ -240,7 +283,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Car className="h-5 w-5 text-purple-500" />
                         <div>
                           <p className="font-medium">Vehicle C - Motorcycle</p>
-                          <p className="text-xs text-muted-foreground">Black Yamaha</p>
+                          <p className="text-xs text-muted-foreground">
+                            Black Yamaha
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">94% confidence</Badge>
@@ -255,7 +300,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Users className="h-5 w-5 text-orange-500" />
                         <div>
                           <p className="font-medium">Driver A</p>
-                          <p className="text-xs text-muted-foreground">Adult male, sedan</p>
+                          <p className="text-xs text-muted-foreground">
+                            Adult male, sedan
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">97% confidence</Badge>
@@ -265,7 +312,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Users className="h-5 w-5 text-orange-500" />
                         <div>
                           <p className="font-medium">Driver B</p>
-                          <p className="text-xs text-muted-foreground">Adult female, SUV</p>
+                          <p className="text-xs text-muted-foreground">
+                            Adult female, SUV
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">95% confidence</Badge>
@@ -275,7 +324,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                         <Users className="h-5 w-5 text-teal-500" />
                         <div>
                           <p className="font-medium">Pedestrians</p>
-                          <p className="text-xs text-muted-foreground">2 adults on sidewalk</p>
+                          <p className="text-xs text-muted-foreground">
+                            2 adults on sidewalk
+                          </p>
                         </div>
                       </div>
                       <Badge variant="outline">92% confidence</Badge>
@@ -299,18 +350,28 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
               <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-4">
                 <div className="text-center">
                   <Zap className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-lg font-medium">3D Reconstruction Viewer</p>
-                  <p className="text-sm text-muted-foreground">Interactive 3D scene analysis</p>
+                  <p className="text-lg font-medium">
+                    3D Reconstruction Viewer
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Interactive 3D scene analysis
+                  </p>
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-blue-500">35 mph</div>
-                  <p className="text-sm text-muted-foreground">Vehicle A Speed</p>
+                  <p className="text-sm text-muted-foreground">
+                    Vehicle A Speed
+                  </p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-green-500">25 mph</div>
-                  <p className="text-sm text-muted-foreground">Vehicle B Speed</p>
+                  <div className="text-2xl font-bold text-green-500">
+                    25 mph
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Vehicle B Speed
+                  </p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-red-500">45°</div>
@@ -335,7 +396,10 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                   <h4 className="font-medium">Photos Analyzed</h4>
                   <div className="grid gap-2 grid-cols-2">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+                      <div
+                        key={i}
+                        className="aspect-square bg-muted rounded-lg flex items-center justify-center"
+                      >
                         <Camera className="h-6 w-6 text-muted-foreground" />
                       </div>
                     ))}
@@ -346,7 +410,9 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                   <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                     <div className="text-center">
                       <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Traffic Camera Footage</p>
+                      <p className="text-sm text-muted-foreground">
+                        Traffic Camera Footage
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -366,23 +432,31 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <h4 className="font-medium text-green-600">Investigation Priority: High</h4>
+                  <h4 className="font-medium text-green-600">
+                    Investigation Priority: High
+                  </h4>
                   <div className="space-y-3">
                     <div className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                       <div>
-                        <p className="font-medium">Interview Vehicle A Driver</p>
+                        <p className="font-medium">
+                          Interview Vehicle A Driver
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Priority witness - may have run red light based on trajectory analysis
+                          Priority witness - may have run red light based on
+                          trajectory analysis
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <div>
-                        <p className="font-medium">Request Traffic Signal Data</p>
+                        <p className="font-medium">
+                          Request Traffic Signal Data
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Obtain signal timing logs for 15 minutes before and after incident
+                          Obtain signal timing logs for 15 minutes before and
+                          after incident
                         </p>
                       </div>
                     </div>
@@ -391,7 +465,8 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
                       <div>
                         <p className="font-medium">Additional Camera Angles</p>
                         <p className="text-sm text-muted-foreground">
-                          Check nearby business security cameras for alternate perspectives
+                          Check nearby business security cameras for alternate
+                          perspectives
                         </p>
                       </div>
                     </div>
@@ -417,5 +492,5 @@ export function AIInsightsDetail({ incidentId }: AIInsightsDetailProps) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
