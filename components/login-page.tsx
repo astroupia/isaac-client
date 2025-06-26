@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ModeToggle } from "@/components/mode-toggle";
 import { AlertCircle, Car, FileText, Shield, User } from "lucide-react";
 
@@ -24,29 +22,54 @@ export function LoginPage() {
   const [selectedRole, setSelectedRole] = useState("traffic");
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isFormValid = userId.trim() !== "" && password.trim() !== "";
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isFormValid) {
+      setError("Please enter both ID and password");
+      return;
+    }
 
-    // Route to the appropriate dashboard based on role
-    switch (selectedRole) {
-      case "traffic":
-        router.push("/dashboard/");
-        break;
-      case "investigator":
-        router.push("/dashboard/investigator");
-        break;
-      case "chief":
-        router.push("/dashboard/chief");
-        break;
-      case "admin":
-        router.push("/dashboard/admin");
-        break;
-      default:
-        router.push("/dashboard/traffic");
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userId, password, role: selectedRole }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        switch (data.role) {
+          case "traffic":
+            router.push("/dashboard/");
+            break;
+          case "investigator":
+            router.push("/dashboard/investigator");
+            break;
+          case "chief":
+            router.push("/dashboard/chief");
+            break;
+          case "admin":
+            router.push("/dashboard/admin");
+            break;
+          default:
+            router.push("/dashboard/");
+        }
+      } else {
+        setError(data.error || "Login failed. Please check your credentials.");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -75,6 +98,12 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
+            {error && (
+              <div className="text-red-500 text-sm mb-4 flex items-center">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                {error}
+              </div>
+            )}
             <Tabs
               defaultValue="traffic"
               className="w-full mb-6"
@@ -119,6 +148,7 @@ export function LoginPage() {
                     placeholder="Enter your officer ID"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
               </TabsContent>
@@ -131,6 +161,7 @@ export function LoginPage() {
                     placeholder="Enter your investigator ID"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
               </TabsContent>
@@ -143,6 +174,7 @@ export function LoginPage() {
                     placeholder="Enter your chief analyst ID"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
               </TabsContent>
@@ -155,6 +187,7 @@ export function LoginPage() {
                     placeholder="Enter your admin ID"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
               </TabsContent>
@@ -169,6 +202,7 @@ export function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -184,10 +218,11 @@ export function LoginPage() {
         <CardFooter>
           <Button
             className="w-full"
-            onClick={handleLogin}
-            disabled={!isFormValid}
+            type="submit"
+            form="login-form"
+            disabled={!isFormValid || isLoading}
           >
-            Sign In
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
         </CardFooter>
       </Card>
