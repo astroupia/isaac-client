@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -21,12 +21,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { Car, FileText, Shield, User, Settings, Bell, Lock, Palette, Globe, HelpCircle } from "lucide-react"
 
 interface UserNavProps {
-  role: string
+  role?: string
 }
 
-export function UserNav({ role }: UserNavProps) {
+export function UserNav({ role: initialRole }: UserNavProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) setUser(data)
+      })
+  }, [])
+
+  const role = user?.role || initialRole || "user"
 
   const getRoleIcon = () => {
     switch (role) {
@@ -59,6 +70,9 @@ export function UserNav({ role }: UserNavProps) {
   }
 
   const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    }
     switch (role) {
       case "traffic":
         return "TP"
@@ -87,7 +101,7 @@ export function UserNav({ role }: UserNavProps) {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">John Doe</p>
+              <p className="text-sm font-medium leading-none">{user ? `${user.firstName} ${user.lastName}` : "John Doe"}</p>
               <p className="text-xs leading-none text-muted-foreground flex items-center">
                 {getRoleIcon()}
                 {getRoleName()}
@@ -138,24 +152,24 @@ export function UserNav({ role }: UserNavProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue="John" />
+                    <Input id="firstName" defaultValue={user?.firstName || ""} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue="Doe" />
+                    <Input id="lastName" defaultValue={user?.lastName || ""} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="john.doe@isaac.gov" />
+                  <Input id="email" type="email" defaultValue={user?.email || ""} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                  <Input id="phone" type="tel" defaultValue={user?.phoneNumber || ""} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="badge">Badge Number</Label>
-                  <Input id="badge" defaultValue="TP-2024-001" />
+                  <Input id="badge" defaultValue={user?.badgeId || ""} />
                 </div>
               </div>
 
@@ -175,13 +189,13 @@ export function UserNav({ role }: UserNavProps) {
                   <div className="space-y-2">
                     <Label>Department</Label>
                     <div className="p-2 bg-muted rounded-md">
-                      <span className="text-sm">Traffic Division</span>
+                      <span className="text-sm">{user?.department || ""}</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="supervisor">Supervisor</Label>
-                  <Input id="supervisor" defaultValue="Chief Smith" readOnly />
+                  <Input id="supervisor" defaultValue={user?.supervisor || ""} readOnly />
                 </div>
               </div>
 
@@ -195,7 +209,7 @@ export function UserNav({ role }: UserNavProps) {
                   <Textarea
                     id="bio"
                     placeholder="Tell us about yourself..."
-                    defaultValue="Experienced traffic personnel with 5+ years in incident management and road safety."
+                    defaultValue={user?.bio || ""}
                     rows={3}
                   />
                 </div>

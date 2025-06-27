@@ -20,17 +20,18 @@ import { AlertCircle, Car, FileText, Shield, User } from "lucide-react";
 export function LoginPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState("traffic");
-  const [userId, setUserId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [greeting, setGreeting] = useState<string | null>(null);
 
-  const isFormValid = userId.trim() !== "" && password.trim() !== "";
+  const isFormValid = email.trim() !== "" && password.trim() !== "";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) {
-      setError("Please enter both ID and password");
+      setError("Please enter both email and password");
       return;
     }
 
@@ -41,28 +42,31 @@ export function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userId, password, role: selectedRole }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        switch (data.role) {
-          case "traffic":
-            router.push("/dashboard/");
-            break;
-          case "investigator":
-            router.push("/dashboard/investigator");
-            break;
-          case "chief":
-            router.push("/dashboard/chief");
-            break;
-          case "admin":
-            router.push("/dashboard/admin");
-            break;
-          default:
-            router.push("/dashboard/");
-        }
+        setGreeting(`Hey ${data.firstName}`);
+        setTimeout(() => {
+          switch (selectedRole) {
+            case "traffic":
+              router.push("/dashboard/traffic");
+              break;
+            case "investigator":
+              router.push("/dashboard/investigator");
+              break;
+            case "chief":
+              router.push("/dashboard/chief");
+              break;
+            case "admin":
+              router.push("/dashboard/admin");
+              break;
+            default:
+              router.push("/dashboard/");
+          }
+        }, 1200);
       } else {
         setError(data.error || "Login failed. Please check your credentials.");
       }
@@ -97,7 +101,12 @@ export function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
+          {greeting && (
+            <div className="text-green-600 text-lg font-semibold mb-4 text-center">
+              {greeting}
+            </div>
+          )}
+          <form onSubmit={handleLogin} id="login-form">
             {error && (
               <div className="text-red-500 text-sm mb-4 flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2" />
@@ -139,61 +148,19 @@ export function LoginPage() {
                   <span className="text-xs">Admin</span>
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="traffic" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="traffic-id">Officer ID</Label>
-                  <Input
-                    id="traffic-id"
-                    placeholder="Enter your officer ID"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="investigator" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="investigator-id">Investigator ID</Label>
-                  <Input
-                    id="investigator-id"
-                    placeholder="Enter your investigator ID"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="chief" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="chief-id">Chief Analyst ID</Label>
-                  <Input
-                    id="chief-id"
-                    placeholder="Enter your chief analyst ID"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="admin" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="admin-id">Admin ID</Label>
-                  <Input
-                    id="admin-id"
-                    placeholder="Enter your admin ID"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </TabsContent>
             </Tabs>
-
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -205,7 +172,6 @@ export function LoginPage() {
                   disabled={isLoading}
                 />
               </div>
-
               <div className="flex items-center">
                 <AlertCircle className="h-4 w-4 text-muted-foreground mr-2" />
                 <p className="text-xs text-muted-foreground">
@@ -213,18 +179,18 @@ export function LoginPage() {
                 </p>
               </div>
             </div>
+            <CardFooter>
+              <Button
+                className="w-full"
+                type="submit"
+                form="login-form"
+                disabled={!isFormValid || isLoading}
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
+              </Button>
+            </CardFooter>
           </form>
         </CardContent>
-        <CardFooter>
-          <Button
-            className="w-full"
-            type="submit"
-            form="login-form"
-            disabled={!isFormValid || isLoading}
-          >
-            {isLoading ? "Signing In..." : "Sign In"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

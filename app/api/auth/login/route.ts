@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   })
-  const res = NextResponse.json({ success: true })
+  const res = NextResponse.json({ success: true, firstName: user.firstName, role: user.role })
   res.headers.set("Set-Cookie", cookie)
   return res
 }
