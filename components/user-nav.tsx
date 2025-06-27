@@ -163,14 +163,6 @@ export function UserNav({ role: initialRole }: UserNavProps) {
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" defaultValue={user?.email || ""} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" defaultValue={user?.phoneNumber || ""} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="badge">Badge Number</Label>
-                  <Input id="badge" defaultValue={user?.badgeId || ""} />
-                </div>
               </div>
 
               <Separator />
@@ -192,26 +184,6 @@ export function UserNav({ role: initialRole }: UserNavProps) {
                       <span className="text-sm">{user?.department || ""}</span>
                     </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="supervisor">Supervisor</Label>
-                  <Input id="supervisor" defaultValue={user?.supervisor || ""} readOnly />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Bio */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Bio</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">About</Label>
-                  <Textarea
-                    id="bio"
-                    placeholder="Tell us about yourself..."
-                    defaultValue={user?.bio || ""}
-                    rows={3}
-                  />
                 </div>
               </div>
             </div>

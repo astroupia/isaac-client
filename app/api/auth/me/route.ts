@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/connect";
 import { cookies } from "next/headers";
+import { ObjectId } from "mongodb";
 
 export async function GET(req: NextRequest) {
   // Get session cookie
   const cookieStore = cookies();
-  const sessionCookie = (await cookieStore).get("session");
+  const sessionCookie = (await cookies()).get("session");
   if (!sessionCookie) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -17,9 +18,17 @@ export async function GET(req: NextRequest) {
   }
   const client = await clientPromise;
   const db = client.db("isaac-db");
-  const user = await db.collection("users").findOne({ _id: { $eq: typeof session.userId === "string" ? new (await import('mongodb')).ObjectId(session.userId) : session.userId } });
+  const user = await db.collection("users").findOne({ _id: new ObjectId(session.userId) });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  return NextResponse.json({ firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
+  // Only return safe fields
+  return NextResponse.json({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    badgeId: user.badgeId || "",
+    department: user.department || ""
+  });
 }
