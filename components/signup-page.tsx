@@ -55,7 +55,7 @@ export function SignupPage() {
     setIsLoading(false);
     if (res.ok) {
       setSuccess(true);
-      setTimeout(() => router.push("/login"), 1200);
+      setTimeout(() => router.push("/"), 1200);
     } else {
       setError(data.error || "Signup failed");
     }
