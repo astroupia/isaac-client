@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import {
   ImageIcon,
   Video,
@@ -194,9 +195,10 @@ export function EvidencePreview({
                   <div className="flex-shrink-0">
                     {file.preview ? (
                       <div className="h-10 w-10 rounded overflow-hidden">
-                        <img
+                        <Image
                           src={file.preview || "/placeholder.svg"}
                           alt={file.name}
+                          fill
                           className="h-full w-full object-cover"
                         />
                       </div>

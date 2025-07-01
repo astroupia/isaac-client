@@ -300,9 +300,8 @@ export function UserDetails({ user }: UserDetailsProps) {
                 </div>
               </div>
               <Badge
-                className={getRoleBadgeColor(user.role)}
+                className={`${getRoleBadgeColor(user.role)} text-sm px-3 py-1`}
                 variant="outline"
-                className="text-sm px-3 py-1"
               >
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </Badge>
@@ -389,9 +388,10 @@ export function UserDetails({ user }: UserDetailsProps) {
               <div>
                 <p className="text-sm font-medium mb-2">Current Role</p>
                 <Badge
-                  className={getRoleBadgeColor(user.role)}
+                  className={`${getRoleBadgeColor(
+                    user.role
+                  )} text-sm px-3 py-1`}
                   variant="outline"
-                  className="text-sm px-3 py-1"
                 >
                   {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </Badge>

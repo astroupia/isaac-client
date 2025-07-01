@@ -90,17 +90,47 @@ export function UserNav({ role: initialRole }: UserNavProps) {
     }
   };
 
+  const getFirstLetter = () => {
+    if (user?.firstName) {
+      return user.firstName[0].toUpperCase();
+    }
+    return getInitials()[0];
+  };
+
+  const getAvatarColor = () => {
+    const colors = [
+      "bg-gradient-to-br from-blue-500 to-blue-600",
+      "bg-gradient-to-br from-green-500 to-green-600",
+      "bg-gradient-to-br from-purple-500 to-purple-600",
+      "bg-gradient-to-br from-orange-500 to-orange-600",
+      "bg-gradient-to-br from-pink-500 to-pink-600",
+      "bg-gradient-to-br from-indigo-500 to-indigo-600",
+      "bg-gradient-to-br from-teal-500 to-teal-600",
+      "bg-gradient-to-br from-red-500 to-red-600",
+    ];
+
+    // Use user's name to consistently pick a color
+    const name = user?.firstName || role;
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src="/placeholder.svg?height=32&width=32"
-                alt="Avatar"
-              />
-              <AvatarFallback>{getInitials()}</AvatarFallback>
+          <Button
+            variant="ghost"
+            className="relative h-10 w-10 rounded-full p-0 hover:bg-accent/50 transition-all duration-200 group"
+          >
+            <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-primary/20 transition-all duration-200">
+              <div
+                className={`h-full w-full rounded-full ${getAvatarColor()} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200`}
+              >
+                <span className="text-white font-semibold text-lg group-hover:scale-110 transition-transform duration-200">
+                  {getFirstLetter()}
+                </span>
+              </div>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -139,14 +169,14 @@ export function UserNav({ role: initialRole }: UserNavProps) {
             <div className="space-y-6">
               {/* Profile Picture */}
               <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage
-                    src="/placeholder.svg?height=80&width=80"
-                    alt="Profile"
-                  />
-                  <AvatarFallback className="text-lg">
-                    {getInitials()}
-                  </AvatarFallback>
+                <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                  <div
+                    className={`h-full w-full rounded-full ${getAvatarColor()} flex items-center justify-center`}
+                  >
+                    <span className="text-white font-bold text-2xl">
+                      {getFirstLetter()}
+                    </span>
+                  </div>
                 </Avatar>
                 <Button variant="outline" size="sm">
                   Change Photo

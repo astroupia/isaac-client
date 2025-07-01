@@ -130,7 +130,7 @@ export function PersonForm({ persons, onChange }: PersonFormProps) {
           <CardContent className="flex flex-col items-center justify-center py-8">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              No people added yet. Click "Add Person" to get started.
+              No people added yet. Click &quot;Add Person&quot; to get started.
             </p>
           </CardContent>
         </Card>

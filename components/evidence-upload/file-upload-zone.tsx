@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 import {
   Upload,
   File,
@@ -303,9 +304,10 @@ export function FileUploadZone({
                     <div className="flex-shrink-0">
                       {file.preview ? (
                         <div className="h-10 w-10 rounded overflow-hidden">
-                          <img
+                          <Image
                             src={file.preview || "/placeholder.svg"}
                             alt={file.name}
+                            fill
                             className="h-full w-full object-cover"
                           />
                         </div>

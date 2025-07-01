@@ -138,7 +138,8 @@ export function VehicleForm({ vehicles, onChange }: VehicleFormProps) {
           <CardContent className="flex flex-col items-center justify-center py-8">
             <Car className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              No vehicles added yet. Click "Add Vehicle" to get started.
+              No vehicles added yet. Click &quot;Add Vehicle&quot; to get
+              started.
             </p>
           </CardContent>
         </Card>
