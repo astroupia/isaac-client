@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   CheckCircle,
@@ -21,18 +27,18 @@ import {
   AlertTriangle,
   Eye,
   Calendar,
-} from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface ChiefReportDetailProps {
-  reportId: string
+  reportId: string;
 }
 
 export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
-  const [reviewNotes, setReviewNotes] = useState("")
-  const [isApproving, setIsApproving] = useState(false)
-  const [isRejecting, setIsRejecting] = useState(false)
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Mock data - in real app, this would be fetched based on reportId
   const report = {
@@ -66,25 +72,25 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
       { type: "witness", count: 3, description: "Witness statements" },
       { type: "measurement", count: 8, description: "Scene measurements" },
     ],
-  }
+  };
 
   const handleApprove = async () => {
-    setIsApproving(true)
+    setIsApproving(true);
     // Simulate API call
     setTimeout(() => {
-      setIsApproving(false)
+      setIsApproving(false);
       // In real app, would redirect or show success message
-    }, 2000)
-  }
+    }, 2000);
+  };
 
   const handleReject = async () => {
-    setIsRejecting(true)
+    setIsRejecting(true);
     // Simulate API call
     setTimeout(() => {
-      setIsRejecting(false)
+      setIsRejecting(false);
       // In real app, would redirect or show success message
-    }, 2000)
-  }
+    }, 2000);
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -138,7 +144,9 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-green-500">{report.aiConfidence}%</div>
+            <div className="text-lg font-bold text-green-500">
+              {report.aiConfidence}%
+            </div>
             <Progress value={report.aiConfidence} className="h-2 mt-2" />
           </CardContent>
         </Card>
@@ -160,8 +168,12 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Badge className="bg-red-500/10 text-red-500 border-red-500/20">High Priority</Badge>
-            <p className="text-xs text-muted-foreground mt-1">Requires immediate attention</p>
+            <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+              High Priority
+            </Badge>
+            <p className="text-xs text-muted-foreground mt-1">
+              Requires immediate attention
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -178,17 +190,23 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
           <Card>
             <CardHeader>
               <CardTitle>Incident Summary</CardTitle>
-              <CardDescription>Overview of the incident and initial findings</CardDescription>
+              <CardDescription>
+                Overview of the incident and initial findings
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Location</h4>
-                  <p className="text-sm text-muted-foreground">{report.location}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {report.location}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Summary</h4>
-                  <p className="text-sm text-muted-foreground">{report.summary}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {report.summary}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -233,17 +251,24 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
           <Card>
             <CardHeader>
               <CardTitle>Evidence Summary</CardTitle>
-              <CardDescription>All evidence collected and analyzed for this incident</CardDescription>
+              <CardDescription>
+                All evidence collected and analyzed for this incident
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 {report.evidence.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       <FileText className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium">{item.description}</p>
-                        <p className="text-sm text-muted-foreground">{item.count} items</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.count} items
+                        </p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm">
@@ -264,65 +289,36 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
                 <Brain className="h-5 w-5 mr-2" />
                 AI Analysis Results
               </CardTitle>
-              <CardDescription>Detailed AI-generated analysis and confidence metrics</CardDescription>
+              <CardDescription>
+                Detailed AI-generated analysis and confidence metrics
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-green-500">{report.aiConfidence}%</div>
-                    <p className="text-sm text-muted-foreground">Overall Confidence</p>
+                    <div className="text-2xl font-bold text-green-500">
+                      {report.aiConfidence}%
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Overall Confidence
+                    </p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-blue-500">98%</div>
-                    <p className="text-sm text-muted-foreground">Object Detection</p>
+                    <p className="text-sm text-muted-foreground">
+                      Object Detection
+                    </p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-purple-500">91%</div>
-                    <p className="text-sm text-muted-foreground">Scene Reconstruction</p>
+                    <div className="text-2xl font-bold text-purple-500">
+                      91%
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Scene Reconstruction
+                    </p>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">AI Analysis Breakdown</h4>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Vehicle Detection Accuracy</span>
-                        <span className="font-medium">98%</span>
-                      </div>
-                      <Progress value={98} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Trajectory Analysis</span>
-                        <span className="font-medium">94%</span>
-                      </div>
-                      <Progress value={94} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Impact Assessment</span>
-                        <span className="font-medium">91%</span>
-                      </div>
-                      <Progress value={91} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Environmental Factors</span>
-                        <span className="font-medium">89%</span>
-                      </div>
-                      <Progress value={89} className="h-2" />
-                    </div>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/dashboard/investigator/ai-reports/${report.id}`}>
-                    <Brain className="h-4 w-4 mr-2" />
-                    View Full AI Analysis Report
-                  </Link>
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -335,12 +331,16 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
                 <MessageSquare className="h-5 w-5 mr-2" />
                 Review & Decision
               </CardTitle>
-              <CardDescription>Provide your review and make a decision on this report</CardDescription>
+              <CardDescription>
+                Provide your review and make a decision on this report
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Review Notes</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Review Notes
+                  </label>
                   <Textarea
                     placeholder="Enter your review comments, feedback, or required changes..."
                     value={reviewNotes}
@@ -374,7 +374,12 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
                     )}
                   </Button>
 
-                  <Button size="lg" variant="destructive" onClick={handleReject} disabled={isApproving || isRejecting}>
+                  <Button
+                    size="lg"
+                    variant="destructive"
+                    onClick={handleReject}
+                    disabled={isApproving || isRejecting}
+                  >
                     {isRejecting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -392,10 +397,21 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
                 <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
                   <p className="font-medium mb-2">Review Guidelines:</p>
                   <ul className="space-y-1 text-xs">
-                    <li>• Verify all evidence has been properly documented and analyzed</li>
-                    <li>• Ensure AI analysis confidence levels meet department standards (≥85%)</li>
-                    <li>• Check that recommendations align with department policies</li>
-                    <li>• Confirm all witness statements have been collected</li>
+                    <li>
+                      • Verify all evidence has been properly documented and
+                      analyzed
+                    </li>
+                    <li>
+                      • Ensure AI analysis confidence levels meet department
+                      standards (≥85%)
+                    </li>
+                    <li>
+                      • Check that recommendations align with department
+                      policies
+                    </li>
+                    <li>
+                      • Confirm all witness statements have been collected
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -404,5 +420,5 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

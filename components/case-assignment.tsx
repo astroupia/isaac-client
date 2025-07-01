@@ -1,18 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, ArrowRight, User, UserCheck } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, ArrowRight, User, UserCheck } from "lucide-react";
+import Link from "next/link";
 
 export function CaseAssignment() {
-  const { toast } = useToast()
-  const [selectedInvestigator, setSelectedInvestigator] = useState<string>("")
+  const { toast } = useToast();
+  const [selectedInvestigator, setSelectedInvestigator] = useState<string>("");
 
   const unassignedCases = [
     {
@@ -36,7 +48,7 @@ export function CaseAssignment() {
       date: "April 24, 2025",
       description: "Signal timing issues causing confusion",
     },
-  ]
+  ];
 
   const investigators = [
     {
@@ -89,7 +101,7 @@ export function CaseAssignment() {
       status: "available",
       completionRate: 87,
     },
-  ]
+  ];
 
   const handleAssignCase = (caseId: string, investigatorId: string) => {
     if (!investigatorId) {
@@ -97,20 +109,20 @@ export function CaseAssignment() {
         title: "No investigator selected",
         description: "Please select an investigator before assigning the case.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    const investigator = investigators.find((inv) => inv.id === investigatorId)
-    const caseItem = unassignedCases.find((c) => c.id === caseId)
+    const investigator = investigators.find((inv) => inv.id === investigatorId);
+    const caseItem = unassignedCases.find((c) => c.id === caseId);
 
     if (investigator && caseItem) {
       toast({
         title: "Case assigned successfully",
         description: `Case #${caseId} has been assigned to ${investigator.name}.`,
-      })
+      });
     }
-  }
+  };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -122,32 +134,41 @@ export function CaseAssignment() {
           >
             High
           </Badge>
-        )
+        );
       case "medium":
         return (
-          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20">
+          <Badge
+            variant="outline"
+            className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+          >
             Medium
           </Badge>
-        )
+        );
       case "low":
         return (
-          <Badge variant="outline" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20"
+          >
             Low
           </Badge>
-        )
+        );
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">Unknown</Badge>;
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "available":
         return (
-          <Badge variant="outline" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20"
+          >
             Available
           </Badge>
-        )
+        );
       case "busy":
         return (
           <Badge
@@ -156,17 +177,20 @@ export function CaseAssignment() {
           >
             Busy
           </Badge>
-        )
+        );
       case "overloaded":
         return (
-          <Badge variant="outline" className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20">
+          <Badge
+            variant="outline"
+            className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20"
+          >
             Overloaded
           </Badge>
-        )
+        );
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">Unknown</Badge>;
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -182,7 +206,8 @@ export function CaseAssignment() {
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Case Assignment</h1>
         <p className="text-muted-foreground">
-          Assign new cases to available investigators based on their workload and specialization.
+          Assign new cases to available investigators based on their workload
+          and specialization.
         </p>
       </div>
 
@@ -190,24 +215,36 @@ export function CaseAssignment() {
         <Card>
           <CardHeader>
             <CardTitle>Unassigned Cases</CardTitle>
-            <CardDescription>Cases waiting to be assigned to investigators</CardDescription>
+            <CardDescription>
+              Cases waiting to be assigned to investigators
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {unassignedCases.map((caseItem) => (
-              <div key={caseItem.id} className="p-4 border rounded-lg space-y-3">
+              <div
+                key={caseItem.id}
+                className="p-4 border rounded-lg space-y-3"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <h4 className="font-medium">#{caseItem.id}</h4>
                     {getPriorityBadge(caseItem.priority)}
                   </div>
-                  <span className="text-sm text-muted-foreground">{caseItem.date}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {caseItem.date}
+                  </span>
                 </div>
                 <div>
                   <h3 className="font-medium">{caseItem.title}</h3>
-                  <p className="text-sm text-muted-foreground">{caseItem.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {caseItem.description}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Select value={selectedInvestigator} onValueChange={setSelectedInvestigator}>
+                  <Select
+                    value={selectedInvestigator}
+                    onValueChange={setSelectedInvestigator}
+                  >
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select investigator" />
                     </SelectTrigger>
@@ -215,11 +252,15 @@ export function CaseAssignment() {
                       {investigators
                         .filter((inv) => inv.status !== "overloaded")
                         .map((investigator) => (
-                          <SelectItem key={investigator.id} value={investigator.id}>
+                          <SelectItem
+                            key={investigator.id}
+                            value={investigator.id}
+                          >
                             <div className="flex items-center space-x-2">
                               <span>{investigator.name}</span>
                               <span className="text-xs text-muted-foreground">
-                                ({investigator.currentCaseload}/{investigator.maxCaseload})
+                                ({investigator.currentCaseload}/
+                                {investigator.maxCaseload})
                               </span>
                             </div>
                           </SelectItem>
@@ -228,7 +269,9 @@ export function CaseAssignment() {
                   </Select>
                   <Button
                     size="sm"
-                    onClick={() => handleAssignCase(caseItem.id, selectedInvestigator)}
+                    onClick={() =>
+                      handleAssignCase(caseItem.id, selectedInvestigator)
+                    }
                     disabled={!selectedInvestigator}
                   >
                     <UserCheck className="mr-2 h-4 w-4" />
@@ -243,21 +286,30 @@ export function CaseAssignment() {
         <Card>
           <CardHeader>
             <CardTitle>Investigator Availability</CardTitle>
-            <CardDescription>Current workload and availability of investigators</CardDescription>
+            <CardDescription>
+              Current workload and availability of investigators
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {investigators.map((investigator) => (
-              <div key={investigator.id} className="p-4 border rounded-lg space-y-3">
+              <div
+                key={investigator.id}
+                className="p-4 border rounded-lg space-y-3"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" alt={investigator.name} />
+                      <AvatarImage
+                        src="/placeholder.svg?height=40&width=40"
+                        alt={investigator.name}
+                      />
                       <AvatarFallback>{investigator.avatar}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="font-medium">{investigator.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {investigator.currentCaseload}/{investigator.maxCaseload} cases
+                        {investigator.currentCaseload}/
+                        {investigator.maxCaseload} cases
                       </p>
                     </div>
                   </div>
@@ -267,18 +319,35 @@ export function CaseAssignment() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Workload</span>
-                    <span>{Math.round((investigator.currentCaseload / investigator.maxCaseload) * 100)}%</span>
+                    <span>
+                      {Math.round(
+                        (investigator.currentCaseload /
+                          investigator.maxCaseload) *
+                          100
+                      )}
+                      %
+                    </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${
-                        investigator.currentCaseload / investigator.maxCaseload >= 0.8
+                        investigator.currentCaseload /
+                          investigator.maxCaseload >=
+                        0.8
                           ? "bg-orange-500"
-                          : investigator.currentCaseload / investigator.maxCaseload >= 1
-                            ? "bg-red-500"
-                            : "bg-primary"
+                          : investigator.currentCaseload /
+                              investigator.maxCaseload >=
+                            1
+                          ? "bg-red-500"
+                          : "bg-primary"
                       }`}
-                      style={{ width: `${(investigator.currentCaseload / investigator.maxCaseload) * 100}%` }}
+                      style={{
+                        width: `${
+                          (investigator.currentCaseload /
+                            investigator.maxCaseload) *
+                          100
+                        }%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -296,7 +365,9 @@ export function CaseAssignment() {
 
                 <div className="flex items-center justify-between text-sm">
                   <span>Completion Rate:</span>
-                  <span className="font-medium">{investigator.completionRate}%</span>
+                  <span className="font-medium">
+                    {investigator.completionRate}%
+                  </span>
                 </div>
               </div>
             ))}
@@ -307,7 +378,9 @@ export function CaseAssignment() {
       <Card>
         <CardHeader>
           <CardTitle>Assignment Recommendations</CardTitle>
-          <CardDescription>AI-powered recommendations for optimal case assignments</CardDescription>
+          <CardDescription>
+            AI-powered recommendations for optimal case assignments
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg">
@@ -318,8 +391,9 @@ export function CaseAssignment() {
               <div className="flex-1">
                 <h4 className="font-medium">Recommended Assignment</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Case #2023-050 (Vehicle Collision) should be assigned to <strong>Emily Davis</strong> based on her
-                  specialization in multi-vehicle accidents, despite her current workload.
+                  Case #2023-050 (Vehicle Collision) should be assigned to{" "}
+                  <strong>Emily Davis</strong> based on her specialization in
+                  multi-vehicle accidents, despite her current workload.
                 </p>
                 <Button size="sm" className="mt-2">
                   <ArrowRight className="mr-2 h-4 w-4" />
@@ -337,8 +411,9 @@ export function CaseAssignment() {
               <div className="flex-1">
                 <h4 className="font-medium">Workload Balance</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Consider assigning Case #2023-049 (Pedestrian Incident) to <strong>Robert Wilson</strong> to balance
-                  workload distribution across the team.
+                  Consider assigning Case #2023-049 (Pedestrian Incident) to{" "}
+                  <strong>Robert Wilson</strong> to balance workload
+                  distribution across the team.
                 </p>
                 <Button size="sm" variant="outline" className="mt-2">
                   <ArrowRight className="mr-2 h-4 w-4" />
@@ -350,5 +425,5 @@ export function CaseAssignment() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -103,44 +103,6 @@ export function ChiefDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-7">
-        <Card className="md:col-span-4">
-          <CardHeader>
-            <CardTitle>Case Assignment</CardTitle>
-            <CardDescription>Assign new cases to investigators</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AssignmentBoard />
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/dashboard/chief/assign">
-                View All Cases
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>AI Insights Overview</CardTitle>
-            <CardDescription>System-wide AI analysis trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AIInsightsSummary />
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/dashboard/chief/ai-insights">
-                View Detailed Insights
-                <Brain className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Reports Pending Review</CardTitle>

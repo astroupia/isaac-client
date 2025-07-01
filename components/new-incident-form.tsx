@@ -1,272 +1,444 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+  AlertTriangle,
+  Save,
+  Send,
+} from "lucide-react";
+import Link from "next/link";
+import { IncidentBasicInfo } from "@/components/incident-creation/incident-basic-info";
+import { VehicleForm } from "@/components/incident-creation/vehicle-form";
+import { PersonForm } from "@/components/incident-creation/person-form";
+import { EvidenceForm } from "@/components/incident-creation/evidence-form";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { ModernDateTimePicker } from "@/components/modern-date-time-picker"
-import { AlertTriangle, ArrowLeft, ArrowRight, FileText, MapPin, Upload, X } from "lucide-react"
-import Link from "next/link"
+interface IncidentData {
+  incidentLocation: string;
+  incidentType: string;
+  incidentSeverity: string;
+  dateTime: Date;
+  numberOfCasualties: number;
+  incidentDescription: string;
+  weatherConditions: string[];
+  roadConditions: string[];
+}
+
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year?: number;
+  color?: string;
+  licensePlate?: string;
+  vin?: string;
+  vehicleType: string;
+  occupantsCount: number;
+  damageDescription?: string;
+  damageSeverity?: string;
+  damageAreas: string[];
+  airbagDeployed?: boolean;
+}
+
+interface Person {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  age?: number;
+  gender?: string;
+  role: "driver" | "passenger" | "pedestrian" | "witness" | "other";
+  contactInfo?: {
+    phoneNumber?: string;
+    email?: string;
+    address?: string;
+  };
+  statement?: string;
+}
+
+interface Evidence {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  file?: File;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  tags: string[];
+  uploadProgress?: number;
+  uploaded?: boolean;
+}
+
+const tabs = [
+  { id: "basic", label: "Basic Info", icon: AlertTriangle },
+  { id: "vehicles", label: "Vehicles", icon: "🚗" },
+  { id: "people", label: "People", icon: "👥" },
+  { id: "evidence", label: "Evidence", icon: "📁" },
+  { id: "review", label: "Review", icon: CheckCircle },
+];
 
 export function NewIncidentForm() {
-  const { toast } = useToast()
-  const [step, setStep] = useState(1)
-  const [files, setFiles] = useState<File[]>([])
-  const [incidentDate, setIncidentDate] = useState<Date>(new Date())
+  const { toast } = useToast();
+  const [currentTab, setCurrentTab] = useState("basic");
+  const [isDraft, setIsDraft] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files)
-      setFiles((prev) => [...prev, ...newFiles])
+  // Form data state
+  const [incidentData, setIncidentData] = useState<IncidentData>({
+    incidentLocation: "",
+    incidentType: "",
+    incidentSeverity: "",
+    dateTime: new Date(),
+    numberOfCasualties: 0,
+    incidentDescription: "",
+    weatherConditions: [],
+    roadConditions: [],
+  });
+
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [persons, setPersons] = useState<Person[]>([]);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
+
+  const updateIncidentData = (field: string, value: any) => {
+    setIncidentData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const getTabIndex = (tabId: string) =>
+    tabs.findIndex((tab) => tab.id === tabId);
+  const getCurrentTabIndex = () => getTabIndex(currentTab);
+  const getProgress = () => ((getCurrentTabIndex() + 1) / tabs.length) * 100;
+
+  const canProceedToNext = () => {
+    switch (currentTab) {
+      case "basic":
+        return (
+          incidentData.incidentLocation &&
+          incidentData.incidentType &&
+          incidentData.incidentSeverity &&
+          incidentData.incidentDescription
+        );
+      case "vehicles":
+        return true; // Vehicles are optional
+      case "people":
+        return true; // People are optional
+      case "evidence":
+        return true; // Evidence is optional
+      default:
+        return true;
     }
-  }
+  };
 
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index))
-  }
+  const nextTab = () => {
+    const currentIndex = getCurrentTabIndex();
+    if (currentIndex < tabs.length - 1) {
+      setCurrentTab(tabs[currentIndex + 1].id);
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const prevTab = () => {
+    const currentIndex = getCurrentTabIndex();
+    if (currentIndex > 0) {
+      setCurrentTab(tabs[currentIndex - 1].id);
+    }
+  };
+
+  const saveDraft = () => {
+    setIsDraft(true);
+    toast({
+      title: "Draft saved",
+      description: "Your incident report has been saved as a draft.",
+    });
+  };
+
+  const submitReport = () => {
+    // Validate required fields
+    if (!canProceedToNext()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Submit logic here
     toast({
       title: "Incident report submitted",
-      description: "Your incident report has been successfully submitted.",
-    })
-    // Redirect to dashboard or confirmation page
-  }
+      description:
+        "Your incident report has been successfully submitted for review.",
+    });
+
+    // Redirect to dashboard
+    // router.push('/dashboard/traffic')
+  };
+
+  const getValidationSummary = () => {
+    const issues = [];
+
+    if (!incidentData.incidentLocation)
+      issues.push("Incident location is required");
+    if (!incidentData.incidentType) issues.push("Incident type is required");
+    if (!incidentData.incidentSeverity)
+      issues.push("Incident severity is required");
+    if (!incidentData.incidentDescription)
+      issues.push("Incident description is required");
+
+    return issues;
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/traffic">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </Button>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/dashboard/traffic">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Create New Incident Report
+            </h1>
+            <p className="text-muted-foreground">
+              Complete all sections to create a comprehensive incident report
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={saveDraft}
+            className="flex items-center gap-2 bg-transparent"
+          >
+            <Save className="h-4 w-4" />
+            Save Draft
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Report New Incident</h1>
-        <p className="text-muted-foreground">Complete the form below to report a new traffic incident.</p>
-      </div>
-
+      {/* Progress */}
       <Card>
-        <CardHeader>
-          <CardTitle>Incident Report Form</CardTitle>
-          <CardDescription>Please provide as much detail as possible about the incident.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={`step-${step}`} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="step-1" onClick={() => setStep(1)}>
-                Basic Information
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Progress</span>
+            <span className="text-sm text-muted-foreground">
+              Step {getCurrentTabIndex() + 1} of {tabs.length}
+            </span>
+          </div>
+          <Progress value={getProgress()} className="h-2" />
+        </CardContent>
+      </Card>
+
+      {/* Main Form */}
+      <Tabs
+        value={currentTab}
+        onValueChange={setCurrentTab}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full grid-cols-5">
+          {tabs.map((tab, index) => {
+            const Icon =
+              typeof tab.icon === "string"
+                ? () => <span className="text-lg">{tab.icon}</span>
+                : tab.icon;
+
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex items-center gap-2"
+                disabled={index > getCurrentTabIndex() + 1}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
               </TabsTrigger>
-              <TabsTrigger value="step-2" onClick={() => setStep(2)}>
-                Incident Details
-              </TabsTrigger>
-              <TabsTrigger value="step-3" onClick={() => setStep(3)}>
-                Evidence Upload
-              </TabsTrigger>
-            </TabsList>
+            );
+          })}
+        </TabsList>
 
-            <TabsContent value="step-1" className="space-y-4 mt-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="incident-datetime">Incident Date & Time</Label>
-                  <ModernDateTimePicker
-                    value={incidentDate}
-                    onChange={setIncidentDate}
-                    placeholder="Select incident date and time"
-                  />
-                </div>
-              </div>
+        <TabsContent value="basic" className="space-y-6">
+          <IncidentBasicInfo
+            data={incidentData}
+            onChange={updateIncidentData}
+          />
+        </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="incident-location">Incident Location</Label>
-                <div className="relative">
-                  <Input id="incident-location" placeholder="Enter the location of the incident" />
-                  <MapPin className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
+        <TabsContent value="vehicles" className="space-y-6">
+          <VehicleForm vehicles={vehicles} onChange={setVehicles} />
+        </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="incident-type">Incident Type</Label>
-                <Select>
-                  <SelectTrigger id="incident-type">
-                    <SelectValue placeholder="Select incident type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="vehicle-collision">Vehicle Collision</SelectItem>
-                    <SelectItem value="pedestrian-incident">Pedestrian Incident</SelectItem>
-                    <SelectItem value="traffic-violation">Traffic Violation</SelectItem>
-                    <SelectItem value="infrastructure-damage">Infrastructure Damage</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <TabsContent value="people" className="space-y-6">
+          <PersonForm persons={persons} onChange={setPersons} />
+        </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="incident-severity">Severity</Label>
-                <Select>
-                  <SelectTrigger id="incident-severity">
-                    <SelectValue placeholder="Select severity level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="minor">Minor - No injuries</SelectItem>
-                    <SelectItem value="moderate">Moderate - Minor injuries</SelectItem>
-                    <SelectItem value="severe">Severe - Serious injuries</SelectItem>
-                    <SelectItem value="fatal">Fatal - Casualties involved</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <TabsContent value="evidence" className="space-y-6">
+          <EvidenceForm evidence={evidence} onChange={setEvidence} />
+        </TabsContent>
 
-              <div className="flex justify-end">
-                <Button onClick={() => setStep(2)}>
-                  Next Step
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="step-2" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="vehicles-involved">Number of Vehicles Involved</Label>
-                <Input id="vehicles-involved" type="number" min="0" placeholder="Enter number of vehicles" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="casualties">Number of Casualties</Label>
-                <Input id="casualties" type="number" min="0" placeholder="Enter number of casualties" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="incident-description">Incident Description</Label>
-                <Textarea
-                  id="incident-description"
-                  placeholder="Provide a detailed description of what happened"
-                  rows={5}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="weather-conditions">Weather Conditions</Label>
-                <Select>
-                  <SelectTrigger id="weather-conditions">
-                    <SelectValue placeholder="Select weather conditions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="clear">Clear</SelectItem>
-                    <SelectItem value="cloudy">Cloudy</SelectItem>
-                    <SelectItem value="rain">Rain</SelectItem>
-                    <SelectItem value="snow">Snow</SelectItem>
-                    <SelectItem value="fog">Fog</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="road-conditions">Road Conditions</Label>
-                <Select>
-                  <SelectTrigger id="road-conditions">
-                    <SelectValue placeholder="Select road conditions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dry">Dry</SelectItem>
-                    <SelectItem value="wet">Wet</SelectItem>
-                    <SelectItem value="icy">Icy</SelectItem>
-                    <SelectItem value="snow-covered">Snow Covered</SelectItem>
-                    <SelectItem value="under-construction">Under Construction</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Previous Step
-                </Button>
-                <Button onClick={() => setStep(3)}>
-                  Next Step
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="step-3" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Evidence Files</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center">
-                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground mb-1">Drag and drop files here or click to browse</p>
-                  <p className="text-xs text-muted-foreground">Supports images, videos, and documents up to 50MB</p>
-                  <Input type="file" className="hidden" id="file-upload" multiple onChange={handleFileChange} />
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => document.getElementById("file-upload")?.click()}
-                  >
-                    Browse Files
-                  </Button>
-                </div>
-              </div>
-
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Uploaded Files ({files.length})</Label>
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                    {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm truncate max-w-[200px]">{file.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </span>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => removeFile(index)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+        <TabsContent value="review" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Review & Submit
+              </CardTitle>
+              <CardDescription>
+                Review all information before submitting your incident report
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Validation Summary */}
+              {getValidationSummary().length > 0 && (
+                <div className="p-4 border border-destructive/20 bg-destructive/5 rounded-lg">
+                  <h4 className="font-medium text-destructive mb-2">
+                    Please address the following issues:
+                  </h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-destructive">
+                    {getValidationSummary().map((issue, index) => (
+                      <li key={index}>{issue}</li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="additional-notes">Additional Notes</Label>
-                <Textarea
-                  id="additional-notes"
-                  placeholder="Any additional information about the evidence or incident"
-                  rows={3}
-                />
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{vehicles.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Vehicles Involved
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{persons.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      People Involved
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">{evidence.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Evidence Items
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold">
+                      {incidentData.numberOfCasualties}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Casualties</p>
+                  </CardContent>
+                </Card>
               </div>
 
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(2)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Previous Step
-                </Button>
-                <Button onClick={handleSubmit}>Submit Report</Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex flex-col items-start border-t p-4">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-            <p>All information provided will be used for official investigation purposes only.</p>
+              {/* Incident Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Incident Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Location:</span>{" "}
+                      {incidentData.incidentLocation || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Type:</span>{" "}
+                      {incidentData.incidentType || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Severity:</span>{" "}
+                      {incidentData.incidentSeverity || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Date/Time:</span>{" "}
+                      {incidentData.dateTime.toLocaleString()}
+                    </div>
+                  </div>
+                  {incidentData.incidentDescription && (
+                    <div className="pt-2 border-t">
+                      <span className="font-medium">Description:</span>
+                      <p className="mt-1 text-muted-foreground">
+                        {incidentData.incidentDescription}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Navigation */}
+      <Card>
+        <CardContent className="flex items-center justify-between pt-6">
+          <div className="flex items-center gap-2">
+            {getCurrentTabIndex() > 0 && (
+              <Button
+                variant="outline"
+                onClick={prevTab}
+                className="flex items-center gap-2 bg-transparent"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </Button>
+            )}
           </div>
-        </CardFooter>
+
+          <div className="flex items-center gap-2">
+            {currentTab !== "review" ? (
+              <Button
+                onClick={nextTab}
+                disabled={!canProceedToNext()}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={submitReport}
+                disabled={getValidationSummary().length > 0}
+                className="flex items-center gap-2"
+              >
+                <Send className="h-4 w-4" />
+                Submit Report
+              </Button>
+            )}
+          </div>
+        </CardContent>
       </Card>
+
+      {/* Draft Status */}
+      {isDraft && (
+        <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-3 shadow-lg">
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Save className="h-4 w-4" />
+            Draft saved automatically
+          </p>
+        </div>
+      )}
     </div>
-  )
+  );
 }

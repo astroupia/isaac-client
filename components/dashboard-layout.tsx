@@ -28,7 +28,6 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
-  Settings,
   Shield,
   User,
   Zap,
@@ -58,8 +57,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0 w-full">
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 w-full">
             <SidebarTrigger />
-            <div className="flex-1" />
-            <NotificationCenter />
+            <div className="flex-1 p-1" />
             <ModeToggle />
             <UserNav role={role} />
           </header>
@@ -278,16 +276,7 @@ function DashboardSidebar({ role }: { role: string }) {
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "hover:bg-accent/50"
                   }`}
-                >
-                  <Link
-                    href="/dashboard/chief/ai-insights"
-                    className="flex items-center space-x-3 px-3 py-2"
-                  >
-                    <Brain className="h-5 w-5 transition-transform group-hover:scale-110" />
-                    <span className="font-medium">AI Insights</span>
-                    <div className="ml-auto h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  </Link>
-                </SidebarMenuButton>
+                ></SidebarMenuButton>
               </SidebarMenuItem>
             </>
           )}
@@ -311,26 +300,6 @@ function DashboardSidebar({ role }: { role: string }) {
               >
                 <BarChart3 className="h-5 w-5 transition-transform group-hover:scale-110" />
                 <span className="font-medium">Report Center</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Settings"
-              className={`group relative overflow-hidden transition-all duration-200 ${
-                isActive(`/dashboard/${role}/settings`)
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "hover:bg-accent/50"
-              }`}
-            >
-              <Link
-                href={`/dashboard/${role}/settings`}
-                className="flex items-center space-x-3 px-3 py-2"
-              >
-                <Settings className="h-5 w-5 transition-transform group-hover:scale-110" />
-                <span className="font-medium">Settings</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
