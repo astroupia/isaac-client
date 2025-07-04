@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -25,6 +27,15 @@ import { IncidentBasicInfo } from "@/components/incident-creation/incident-basic
 import { VehicleForm } from "@/components/incident-creation/vehicle-form";
 import { PersonForm } from "@/components/incident-creation/person-form";
 import { EvidenceForm } from "@/components/incident-creation/evidence-form";
+import { useIncidentForm } from "@/hooks/useIncidentForm";
+import { IncidentType, IncidentSeverity } from "@/types/incident";
+import { EvidenceType } from "@/types/evidence";
+import { VehicleType } from "@/types/vehicle";
+import { incidentService } from "@/lib/api/incidents";
+import { vehicleService } from "@/lib/api/vehicles";
+import evidenceService from "@/lib/api/evidence";
+import { apiService } from "@/lib/api/base";
+import mediaService from "@/lib/api/media";
 
 interface IncidentData {
   incidentLocation: string;
@@ -80,6 +91,7 @@ interface Evidence {
   tags: string[];
   uploadProgress?: number;
   uploaded?: boolean;
+  fileUrl?: string; // Added for existing evidence
 }
 
 const tabs = [
@@ -92,8 +104,16 @@ const tabs = [
 
 export function NewIncidentForm() {
   const { toast } = useToast();
-  const [currentTab, setCurrentTab] = useState("basic");
   const [isDraft, setIsDraft] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentTab, setCurrentTab] = useState(tabs[0].id);
+  const router = useRouter();
+  const {
+    createIncident,
+    uploadMedia,
+    addEvidence,
+    isSubmitting: isHookSubmitting,
+  } = useIncidentForm();
 
   // Form data state
   const [incidentData, setIncidentData] = useState<IncidentData>({
@@ -110,6 +130,16 @@ export function NewIncidentForm() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [persons, setPersons] = useState<Person[]>([]);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data._id) setUserId(data._id);
+        else if (data && data.id) setUserId(data.id);
+      });
+  }, []);
 
   const updateIncidentData = (field: string, value: any) => {
     setIncidentData((prev) => ({ ...prev, [field]: value }));
@@ -162,31 +192,8 @@ export function NewIncidentForm() {
     });
   };
 
-  const submitReport = () => {
-    // Validate required fields
-    if (!canProceedToNext()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Submit logic here
-    toast({
-      title: "Incident report submitted",
-      description:
-        "Your incident report has been successfully submitted for review.",
-    });
-
-    // Redirect to dashboard
-    // router.push('/dashboard/traffic')
-  };
-
   const getValidationSummary = () => {
     const issues = [];
-
     if (!incidentData.incidentLocation)
       issues.push("Incident location is required");
     if (!incidentData.incidentType) issues.push("Incident type is required");
@@ -194,8 +201,122 @@ export function NewIncidentForm() {
       issues.push("Incident severity is required");
     if (!incidentData.incidentDescription)
       issues.push("Incident description is required");
-
+  
     return issues;
+  };
+
+  const submitReport = async () => {
+    console.log('Starting submitReport');
+    // (validation and userId checks can be added here if needed)
+
+    if (!userId) {
+      toast({
+        title: "User Error",
+        description: "Could not determine current user. Please re-login.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      // 1. Upload all evidence files first and collect upload results
+      const evidenceUploadResults = await Promise.all(
+        evidence.map(async (ev) => {
+          if (ev.file) {
+            const uploadRes = await mediaService.uploadFile(ev.file);
+            return { ...ev, ...uploadRes };
+          }
+          return ev;
+        })
+      );
+
+      // Debugging step: log evidenceUploadResults
+      console.log('evidenceUploadResults:', evidenceUploadResults);
+
+      // 2. Create evidence records and collect their IDs
+      const evidenceIds: string[] = [];
+      for (const ev of evidenceUploadResults) {
+        const uploadData = ev as typeof ev & {
+          url?: string;
+          publicId?: string;
+          resourceType?: string;
+          format?: string;
+          size?: number;
+          width?: number;
+          height?: number;
+        };
+        const evidencePayload = {
+          title: uploadData.title || uploadData.fileName || "Evidence",
+          description: uploadData.description || "",
+          type: uploadData.type as EvidenceType,
+          fileUrl: uploadData.url || uploadData.fileUrl,
+          fileName: uploadData.fileName,
+          fileSize: uploadData.size ?? uploadData.fileSize,
+          fileType: uploadData.format ?? uploadData.fileType,
+          tags: uploadData.tags || [],
+          uploadedBy: userId,
+          publicId: uploadData.publicId,
+          resourceType: uploadData.resourceType,
+          format: uploadData.format,
+          size: uploadData.size,
+          width: uploadData.width,
+          height: uploadData.height,
+        };
+        console.log('Creating evidence...', evidencePayload);
+        const createdEvidence = await evidenceService.createEvidence(evidencePayload);
+        evidenceIds.push((createdEvidence as any).id || (createdEvidence as any)._id);
+      }
+
+      // 3. Create vehicle records
+      console.log('Creating vehicles...');
+      const vehicleIds: string[] = [];
+      for (const v of vehicles) {
+        const vehiclePayload = {
+          ...v,
+          vehicleType: v.vehicleType as VehicleType,
+          damageSeverity: v.damageSeverity as import("@/types/vehicle").DamageSeverity,
+        };
+        const createdVehicle = await vehicleService.createVehicle(vehiclePayload);
+        vehicleIds.push((createdVehicle as any).id || (createdVehicle as any)._id);
+      }
+
+      // 4. Create person records
+      console.log('Creating persons...');
+      const personIds: string[] = [];
+      for (const p of persons) {
+        const personPayload = { ...p };
+        const createdPerson = await apiService.post("/persons", personPayload);
+        personIds.push((createdPerson as any).id || (createdPerson as any)._id);
+      }
+
+      // 5. Create the incident with all IDs
+      console.log('Creating incident...');
+      const incidentPayload = {
+        ...incidentData,
+        incidentType: incidentData.incidentType as IncidentType,
+        incidentSeverity: incidentData.incidentSeverity as IncidentSeverity,
+        evidenceIds,
+        vehicleIds,
+        personIds,
+      };
+      await incidentService.createIncident(incidentPayload);
+      console.log('Incident created, navigating...');
+
+      toast({
+        title: "Success!",
+        description: "Your incident report has been submitted successfully.",
+      });
+      router.push("/dashboard/traffic");
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit the report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -251,11 +372,6 @@ export function NewIncidentForm() {
       >
         <TabsList className="grid w-full grid-cols-5">
           {tabs.map((tab, index) => {
-            const Icon =
-              typeof tab.icon === "string"
-                ? () => <span className="text-lg">{tab.icon}</span>
-                : tab.icon;
-
             return (
               <TabsTrigger
                 key={tab.id}
@@ -263,7 +379,11 @@ export function NewIncidentForm() {
                 className="flex items-center gap-2"
                 disabled={index > getCurrentTabIndex() + 1}
               >
-                <Icon className="h-4 w-4" />
+                {typeof tab.icon === "string" ? (
+                  <span className="text-lg">{tab.icon}</span>
+                ) : (
+                  <tab.icon className="h-4 w-4" />
+                )}
                 <span className="hidden sm:inline">{tab.label}</span>
               </TabsTrigger>
             );
@@ -419,11 +539,20 @@ export function NewIncidentForm() {
             ) : (
               <Button
                 onClick={submitReport}
-                disabled={getValidationSummary().length > 0}
+                disabled={getValidationSummary().length > 0 || isSubmitting}
                 className="flex items-center gap-2"
               >
-                <Send className="h-4 w-4" />
-                Submit Report
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Report
+                  </>
+                )}
               </Button>
             )}
           </div>

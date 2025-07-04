@@ -22,8 +22,10 @@ export async function GET(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+  console.log('user', user);
   // Only return safe fields
   return NextResponse.json({
+    _id: user._id.toString(),
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
