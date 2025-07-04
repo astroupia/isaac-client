@@ -222,10 +222,14 @@ export function NewIncidentForm() {
       // 1. Upload all evidence files first and collect upload results
       const evidenceUploadResults = await Promise.all(
         evidence.map(async (ev) => {
+          console.log('Processing evidence item:', ev);
+          console.log('Evidence has file:', !!ev.file);
           if (ev.file) {
+            console.log('Uploading file:', ev.file.name);
             const uploadRes = await mediaService.uploadFile(ev.file);
             return { ...ev, ...uploadRes };
           }
+          console.log('No file to upload for evidence:', ev.title);
           return ev;
         })
       );

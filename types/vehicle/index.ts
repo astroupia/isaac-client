@@ -20,6 +20,7 @@ export enum DamageSeverity {
 }
 
 export interface IVehicle {
+  _id: string;  
   make: string;
   model: string;
   year?: number;

@@ -5,7 +5,7 @@ import { ICreateVehicleDto } from '@/app/types/vehicle';
 import { incidentService } from '@/lib/api/incidents';
 import { evidenceService } from '@/lib/api/evidence';
 import { vehicleService } from '@/lib/api/vehicles';
-import { mediaService } from '@/lib/api/media';
+import mediaService from '@/lib/api/media';
 
 export const useIncidentForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +43,8 @@ export const useIncidentForm = () => {
       const evidence = await evidenceService.createEvidence({
         ...evidenceData,
         relatedTo: {
-          incidentId,
+          // Note: evidence doesn't directly relate to incidents in the current schema
+          // You may need to update the evidence schema or handle this differently
         },
       });
       return evidence;
@@ -59,7 +60,7 @@ export const useIncidentForm = () => {
       
       // Update incident with the new vehicle
       await incidentService.updateIncident(incidentId, {
-        vehicleIds: [vehicle._id],
+        vehicleIds: [(vehicle as any)._id],
       });
       
       return vehicle;

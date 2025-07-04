@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -35,6 +35,7 @@ import {
   Eye,
   Package,
   X,
+  Save,
 } from "lucide-react";
 
 interface Evidence {
@@ -116,6 +117,51 @@ const quickActionTypes = [
 export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [fileStore, setFileStore] = useState<Map<string, File>>(new Map());
+
+  // Debug: Log evidence state changes
+  console.log('EvidenceForm rendered with evidence:', evidence);
+  evidence.forEach((item, index) => {
+    console.log(`Evidence[${index}]:`, {
+      id: item.id,
+      title: item.title,
+      hasFile: !!item.file,
+      fileName: item.fileName,
+      uploaded: item.uploaded,
+      uploadProgress: item.uploadProgress
+    });
+  });
+
+  // Monitor evidence prop changes
+  useEffect(() => {
+    console.log('=== EVIDENCE PROP CHANGED ===');
+    console.log('New evidence prop:', evidence);
+    
+    let needsUpdate = false;
+    const updatedEvidence = evidence.map((item, index) => {
+      if (fileStore.has(item.id) && !item.file) {
+        console.log(`WARNING: Evidence[${index}] ${item.id} has file in store but not in prop!`);
+        console.log('File in store:', fileStore.get(item.id));
+        console.log('Automatically restoring file...');
+        
+        const storedFile = fileStore.get(item.id)!;
+        needsUpdate = true;
+        return {
+          ...item,
+          file: storedFile,
+          fileName: storedFile.name,
+          fileSize: storedFile.size,
+          fileType: storedFile.type
+        };
+      }
+      return item;
+    });
+    
+    if (needsUpdate) {
+      console.log('Restoring missing files from store...');
+      onChange(updatedEvidence);
+    }
+  }, [evidence, fileStore, onChange]);
 
   const addEvidence = (type?: string) => {
     const newEvidence: Evidence = {
@@ -131,10 +177,25 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
   };
 
   const updateEvidence = (index: number, field: string, value: any) => {
-    const updatedEvidence = evidence.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    );
+    console.log(`=== UPDATE EVIDENCE START ===`);
+    console.log(`Updating evidence[${index}].${field} to:`, value);
+    console.log(`Current evidence[${index}] before update:`, evidence[index]);
+    
+    const updatedEvidence = evidence.map((item, i) => {
+      if (i === index) {
+        const newItem = { ...item, [field]: value };
+        console.log(`Creating new evidence item:`, newItem);
+        return newItem;
+      }
+      return item;
+    });
+    
+    console.log(`Updated evidence[${index}]:`, updatedEvidence[index]);
+    console.log(`File preserved in update?`, !!updatedEvidence[index].file);
+    
     onChange(updatedEvidence);
+    
+    console.log(`=== UPDATE EVIDENCE END ===`);
   };
 
   const removeEvidence = (index: number) => {
@@ -146,10 +207,33 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
   };
 
   const handleFileUpload = (index: number, file: File) => {
+    console.log('=== HANDLE FILE UPLOAD START ===');
+    console.log('handleFileUpload called with file:', file.name, 'for index:', index);
+    console.log('File object:', file);
+    console.log('Current evidence before file upload:', evidence[index]);
+    
+    const evidenceId = evidence[index].id;
+    
+    // Store file in fileStore
+    setFileStore(prev => {
+      const newStore = new Map(prev);
+      newStore.set(evidenceId, file);
+      console.log('File stored in fileStore for evidence ID:', evidenceId);
+      return newStore;
+    });
+    
     updateEvidence(index, "file", file);
     updateEvidence(index, "fileName", file.name);
     updateEvidence(index, "fileSize", file.size);
     updateEvidence(index, "fileType", file.type);
+    console.log('File attached to evidence at index:', index);
+    
+    // Check if file was actually attached
+    setTimeout(() => {
+      console.log('Evidence after file attachment:', evidence[index]);
+      console.log('File still attached?', !!evidence[index]?.file);
+      console.log('File in store?', fileStore.has(evidenceId));
+    }, 50);
 
     // Simulate upload progress
     let progress = 0;
@@ -158,10 +242,13 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
       if (progress >= 100) {
         progress = 100;
         updateEvidence(index, "uploaded", true);
+        console.log('File upload completed for index:', index);
         clearInterval(interval);
       }
       updateEvidence(index, "uploadProgress", progress);
     }, 200);
+    
+    console.log('=== HANDLE FILE UPLOAD END ===');
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -169,7 +256,9 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
     setDragOver(false);
 
     const files = Array.from(e.dataTransfer.files);
-    files.forEach((file) => {
+    console.log('Files dropped:', files.length, 'files');
+    files.forEach((file, fileIndex) => {
+      console.log(`Processing dropped file ${fileIndex + 1}:`, file.name, file.type);
       const newEvidence: Evidence = {
         id: `evidence-${Date.now()}-${Math.random()}`,
         title: file.name.split(".")[0],
@@ -188,11 +277,13 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
         uploadProgress: 0,
         uploaded: false,
       };
+      console.log('Created evidence with file:', newEvidence);
       onChange([...evidence, newEvidence]);
 
       // Simulate upload
       setTimeout(() => {
         const index = evidence.length;
+        console.log('Starting upload simulation for index:', index);
         handleFileUpload(index, file);
       }, 100);
     });
@@ -334,6 +425,16 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
                         Uploaded
                       </Badge>
                     )}
+                    {item.file && !item.uploaded && (
+                      <Badge variant="outline" className="text-blue-600">
+                        File Attached
+                      </Badge>
+                    )}
+                    {!item.file && !item.uploaded && (
+                      <Badge variant="outline" className="text-gray-600">
+                        No File
+                      </Badge>
+                    )}
                   </CardDescription>
                 </div>
               </div>
@@ -422,9 +523,14 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
                     <Input
                       type="file"
                       onChange={(e) => {
+                        console.log('File input onChange triggered');
                         const file = e.target.files?.[0];
+                        console.log('Selected file:', file);
                         if (file) {
+                          console.log('Calling handleFileUpload with file:', file.name, 'for index:', index);
                           handleFileUpload(index, file);
+                        } else {
+                          console.log('No file selected');
                         }
                       }}
                       accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
@@ -463,6 +569,75 @@ export function EvidenceForm({ evidence, onChange }: EvidenceFormProps) {
                       }
                     }}
                   />
+                </div>
+
+                {/* Save and Cancel buttons */}
+                <div className="flex items-center gap-2 pt-4 border-t">
+                  <Button
+                    onClick={() => {
+                      console.log('Save button clicked for evidence index:', index);
+                      console.log('Current evidence data:', evidence[index]);
+                      console.log('Evidence file object:', evidence[index].file);
+                      
+                      // Force a state update to ensure data is saved
+                      const currentEvidence = evidence[index];
+                      const evidenceId = currentEvidence.id;
+                      
+                      // Check if file is in store but missing from evidence
+                      if (!currentEvidence.file && fileStore.has(evidenceId)) {
+                        console.log('File missing from evidence but found in store, restoring...');
+                        const storedFile = fileStore.get(evidenceId)!;
+                        updateEvidence(index, "file", storedFile);
+                        updateEvidence(index, "fileName", storedFile.name);
+                        updateEvidence(index, "fileSize", storedFile.size);
+                        updateEvidence(index, "fileType", storedFile.type);
+                      }
+                      
+                      // Detailed logging of current state
+                      console.log('Current evidence state before save:', {
+                        hasFile: !!currentEvidence.file,
+                        fileName: currentEvidence.fileName,
+                        fileSize: currentEvidence.fileSize,
+                        fileType: currentEvidence.fileType,
+                        uploaded: currentEvidence.uploaded,
+                        uploadProgress: currentEvidence.uploadProgress
+                      });
+                      
+                      const finalFile = currentEvidence.file || fileStore.get(evidenceId);
+                      
+                      if (finalFile) {
+                        console.log('Evidence has file, marking as uploaded');
+                        console.log('File details:', {
+                          name: finalFile.name,
+                          size: finalFile.size,
+                          type: finalFile.type
+                        });
+                        updateEvidence(index, "uploaded", true);
+                      } else {
+                        console.log('ERROR: No file found in evidence or store!');
+                      }
+                      
+                      // Log the evidence array after potential updates
+                      setTimeout(() => {
+                        console.log('Evidence state after save:', evidence[index]);
+                      }, 100);
+                      
+                      setEditingIndex(null);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Evidence
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      console.log('Cancel button clicked');
+                      setEditingIndex(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </CardContent>
             )}
