@@ -10,6 +10,10 @@ export const evidenceService = {
     return apiService.get<IEvidence>(`/evidence/${id}`);
   },
 
+  getAllEvidence: async (): Promise<IEvidence[]> => {
+    return apiService.get<IEvidence[]>('/evidence');
+  },
+
   updateEvidence: async (id: string, data: IUpdateEvidenceDto): Promise<IEvidence> => {
     return apiService.patch<IEvidence>(`/evidence/${id}`, data);
   },

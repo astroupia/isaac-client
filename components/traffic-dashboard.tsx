@@ -12,10 +12,73 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecentReports } from "@/components/recent-reports";
-import { AlertTriangle, ArrowRight, Car, FileText, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, Car, FileText, Upload, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useTrafficDashboard } from "@/hooks/useTrafficDashboard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function TrafficDashboard() {
+  const { stats, recentReports, recentUploads, loading, error, refreshData } = useTrafficDashboard();
+
+  if (loading) {
+    return (
+      <div className="space-y-6 w-full">
+        <div className="flex flex-col space-y-2 w-full">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-2 w-full mt-3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 w-full">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Traffic Personnel Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome back! Here&apos;s an overview of your recent activity and
+              pending tasks.
+            </p>
+          </div>
+          <Button onClick={refreshData} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+        
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
+              <p className="text-destructive font-medium">Failed to load dashboard data</p>
+              <p className="text-sm text-muted-foreground mt-1">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-col space-y-2 w-full">
@@ -37,7 +100,7 @@ export function TrafficDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{stats.pendingReports}</div>
             <p className="text-xs text-muted-foreground">
               Reports awaiting completion
             </p>
@@ -61,7 +124,7 @@ export function TrafficDashboard() {
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{stats.completedThisWeek}</div>
             <p className="text-xs text-muted-foreground">+4 from last week</p>
           </CardContent>
           <CardFooter>
@@ -83,7 +146,7 @@ export function TrafficDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              1
+              {stats.urgentActions}
             </div>
             <p className="text-xs text-orange-600/80 dark:text-orange-400/80">
               Incident report needs additional information
@@ -147,49 +210,25 @@ export function TrafficDashboard() {
                 <TabsTrigger value="uploads">Uploads</TabsTrigger>
               </TabsList>
               <TabsContent value="reports" className="mt-4">
-                <RecentReports />
+                <RecentReports reports={recentReports} />
               </TabsContent>
               <TabsContent value="uploads" className="mt-4">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-primary" />
+                  {recentUploads.map((upload) => (
+                    <div key={upload.id} className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {upload.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded {upload.uploadedAt}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        Photo_Evidence_2023-045.jpg
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Uploaded 2 hours ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        Video_Evidence_2023-044.mp4
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Uploaded yesterday
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        Witness_Statement_2023-044.pdf
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Uploaded yesterday
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </TabsContent>
             </Tabs>

@@ -1,7 +1,20 @@
 import { Badge } from "@/components/ui/badge"
 
-export function RecentReports() {
-  const reports = [
+interface RecentReport {
+  id: string;
+  title: string;
+  status: string;
+  date: string;
+  incidentId?: string;
+}
+
+interface RecentReportsProps {
+  reports?: RecentReport[];
+}
+
+export function RecentReports({ reports = [] }: RecentReportsProps) {
+  // Fallback to static data if no reports provided
+  const displayReports = reports.length > 0 ? reports : [
     {
       id: "2023-045",
       title: "Vehicle Collision - Highway 101",
@@ -26,7 +39,7 @@ export function RecentReports() {
       status: "completed",
       date: "3 days ago",
     },
-  ]
+  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -58,7 +71,7 @@ export function RecentReports() {
 
   return (
     <div className="space-y-4">
-      {reports.map((report) => (
+      {displayReports.map((report) => (
         <div key={report.id} className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium leading-none">{report.title}</p>

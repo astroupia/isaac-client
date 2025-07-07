@@ -10,6 +10,10 @@ export const incidentService = {
     return apiService.get<IIncident>(`/incidents/${id}`);
   },
 
+  getAllIncidents: async (): Promise<IIncident[]> => {
+    return apiService.get<IIncident[]>('/incidents');
+  },
+
   updateIncident: async (id: string, data: IUpdateIncidentDto): Promise<IIncident> => {
     return apiService.patch<IIncident>(`/incidents/${id}`, data);
   },

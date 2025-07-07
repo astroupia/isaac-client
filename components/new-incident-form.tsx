@@ -36,6 +36,8 @@ import { vehicleService } from "@/lib/api/vehicles";
 import evidenceService from "@/lib/api/evidence";
 import { apiService } from "@/lib/api/base";
 import mediaService from "@/lib/api/media";
+import { reportService } from "@/lib/api/reports";
+import { ReportType, ReportStatus } from "@/app/types/report";
 
 interface IncidentData {
   incidentLocation: string;
@@ -205,6 +207,21 @@ export function NewIncidentForm() {
     return issues;
   };
 
+  const getPriorityFromSeverity = (severity: string): string => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+      case 'severe':
+        return 'High Priority';
+      case 'moderate':
+        return 'Medium Priority';
+      case 'minor':
+      case 'low':
+        return 'Low Priority';
+      default:
+        return 'Medium Priority';
+    }
+  };
+
   const submitReport = async () => {
     console.log('Starting submitReport');
     // (validation and userId checks can be added here if needed)
@@ -303,8 +320,39 @@ export function NewIncidentForm() {
         vehicleIds,
         personIds,
       };
-      await incidentService.createIncident(incidentPayload);
+      const createdIncident = await incidentService.createIncident(incidentPayload);
       console.log('Incident created, navigating...');
+
+      // 6. Create a report for the incident
+      console.log('Creating report for incident...');
+      const incidentId = (createdIncident as any).id || (createdIncident as any)._id;
+      
+      const reportPayload = {
+        incidentId,
+        title: `Incident Report - ${incidentData.incidentType} at ${incidentData.incidentLocation}`,
+        type: 'Incident' as any,
+        status: 'Submitted' as any,
+        priority: getPriorityFromSeverity(incidentData.incidentSeverity),
+        createdBy: userId,
+        content: {
+          incidentDetails: incidentData,
+          vehicles: vehicles.length,
+          persons: persons.length,
+          evidence: evidence.length,
+          casualties: incidentData.numberOfCasualties,
+          weatherConditions: incidentData.weatherConditions,
+          roadConditions: incidentData.roadConditions,
+        },
+        tags: [
+          incidentData.incidentType,
+          incidentData.incidentSeverity,
+          'traffic-incident',
+          'auto-generated'
+        ],
+      };
+      
+      await reportService.createReport(reportPayload);
+      console.log('Report created successfully');
 
       toast({
         title: "Success!",
