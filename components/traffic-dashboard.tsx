@@ -16,9 +16,24 @@ import { AlertTriangle, ArrowRight, Car, FileText, Upload, RefreshCw } from "luc
 import Link from "next/link";
 import { useTrafficDashboard } from "@/hooks/useTrafficDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
+
+// Add type for RecentUpload
+interface RecentUpload {
+  id: string;
+  name: string;
+  type: string;
+  uploadedAt: string;
+  evidenceType: string;
+  url?: string; // Add url as optional
+  fileUrl?: string; // fallback if url is not present
+}
 
 export function TrafficDashboard() {
   const { stats, recentReports, recentUploads, loading, error, refreshData } = useTrafficDashboard();
+  const [selectedUpload, setSelectedUpload] = useState<RecentUpload | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (loading) {
     return (
@@ -166,72 +181,127 @@ export function TrafficDashboard() {
             </Button>
           </CardFooter>
         </Card>
-      </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks and actions</CardDescription>
+        {/* New: Total Incidents */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Incidents
+            </CardTitle>
+            <Car className="h-4 w-4 text-blue-500" />
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <Button className="w-full justify-start" asChild>
-              <Link href="/dashboard/traffic/new-incident">
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Report New Incident
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/traffic/upload-evidence">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Evidence
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/traffic/reports">
-                <FileText className="mr-2 h-4 w-4" />
-                View My Reports
-              </Link>
-            </Button>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalIncidents}</div>
+            <p className="text-xs text-muted-foreground">
+              All incidents reported
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Your recent reports and submissions
-            </CardDescription>
+        {/* New: Total Evidence */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Evidence
+            </CardTitle>
+            <Upload className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="reports">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-                <TabsTrigger value="uploads">Uploads</TabsTrigger>
-              </TabsList>
-              <TabsContent value="reports" className="mt-4">
-                <RecentReports reports={recentReports} />
-              </TabsContent>
-              <TabsContent value="uploads" className="mt-4">
-                <div className="space-y-4">
-                  {recentUploads.map((upload) => (
-                    <div key={upload.id} className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {upload.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Uploaded {upload.uploadedAt}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
+            <div className="text-2xl font-bold">{stats.totalEvidence}</div>
+            <p className="text-xs text-muted-foreground">
+              All evidence items uploaded
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Reports and Uploads */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Recent Reports</CardTitle>
+            <CardDescription>Last 5 reports</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentReports.length === 0 ? (
+              <p className="text-muted-foreground">No recent reports.</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentReports.map((report, idx) => (
+                  <li key={report.id || `${report.title}-${idx}` } className="flex flex-col">
+                    <span className="font-medium">{report.title}</span>
+                    <span className="text-xs text-muted-foreground">{report.date} &mdash; {report.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Recent Evidence Uploads</CardTitle>
+            <CardDescription>Last 5 uploads</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentUploads.length === 0 ? (
+              <p className="text-muted-foreground">No recent uploads.</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentUploads.map((upload) => {
+                  // Use fileUrl for preview
+                  const previewUrl = (upload as any).fileUrl || undefined;
+                  const previewType = (upload as any).fileType || upload.type || '';
+                  return (
+                    <li key={upload.id} className="flex flex-col gap-1">
+                      <span className="font-medium">{upload.name}</span>
+                      <span className="text-xs text-muted-foreground">{upload.uploadedAt} &mdash; {upload.evidenceType}</span>
+                      <Dialog open={dialogOpen && selectedUpload?.id === upload.id} onOpenChange={(open) => { setDialogOpen(open); if (!open) setSelectedUpload(null); }}>
+                        <DialogTrigger asChild>
+                          <button
+                            className="text-blue-600 underline text-xs self-start"
+                            onClick={() => { setSelectedUpload(upload); setDialogOpen(true); }}
+                          >
+                            Preview
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Evidence Preview</DialogTitle>
+                            <DialogDescription>
+                              <div className="mb-2">
+                                <strong>Name:</strong> {upload.name}<br />
+                                <strong>Type:</strong> {upload.evidenceType}<br />
+                                <strong>Uploaded At:</strong> {upload.uploadedAt}
+                              </div>
+                              {/* Preview logic based on file type */}
+                              {previewType.startsWith("image/") && previewUrl && (
+                                <img src={previewUrl} alt={upload.name} className="max-w-full max-h-64 rounded border" />
+                              )}
+                              {previewType.startsWith("video/") && previewUrl && (
+                                <video controls className="max-w-full max-h-64 rounded border">
+                                  <source src={previewUrl} type={previewType} />
+                                  Your browser does not support the video tag.
+                                </video>
+                              )}
+                              {previewType.startsWith("audio/") && previewUrl && (
+                                <audio controls className="w-full mt-2">
+                                  <source src={previewUrl} type={previewType} />
+                                  Your browser does not support the audio tag.
+                                </audio>
+                              )}
+                              {/* Fallback for other types */}
+                              {(!previewType || (!previewType.startsWith("image/") && !previewType.startsWith("video/") && !previewType.startsWith("audio/"))) && (
+                                <div className="text-muted-foreground italic">Preview not available for this file type.</div>
+                              )}
+                            </DialogDescription>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -21,6 +21,10 @@ export const reportService = {
   getIncidentReport: async (incidentId: string): Promise<IReport> => {
     return apiService.get<IReport>(`/reports/incident/${incidentId}`);
   },
+
+  getAllReports: async (): Promise<IReport[]> => {
+    return apiService.get<IReport[]>(`/reports`);
+  },
 };
 
 export default reportService;

@@ -106,6 +106,8 @@ export const useTrafficDashboard = () => {
           type: ev.fileType || 'unknown',
           uploadedAt: ev.uploadedAt ? new Date(ev.uploadedAt).toLocaleDateString() : 'Unknown',
           evidenceType: ev.type || 'unknown',
+          fileUrl: ev.fileUrl,
+          fileType: ev.fileType,
         }));
 
       setStats({

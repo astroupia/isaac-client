@@ -13,7 +13,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User already exists" }, { status: 400 });
   }
   const hashed = await bcrypt.hash(password, 10);
-  const user = { email, password: hashed, firstName, lastName, role, isActive: true, createdAt: new Date(), updatedAt: new Date() };
+  let user: any = { email, password: hashed, firstName, lastName, role, isActive: true, createdAt: new Date(), updatedAt: new Date() };
+  if (role === 'investigator') {
+    user.currentCaseload = 0;
+    user.maxCaseload = 5;
+    user.specialization = [];
+    user.completionRate = 100;
+  }
   const result = await db.collection("users").insertOne(user);
   console.log("Insert result:", result);
   return NextResponse.json({ success: true });
