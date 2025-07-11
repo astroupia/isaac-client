@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -23,25 +23,72 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
+import { userService } from "@/lib/api/users";
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-
-  // Mock data for dashboard stats
-  const stats = {
-    totalUsers: 247,
-    activeUsers: 231,
-    inactiveUsers: 16,
-    newUsersThisMonth: 12,
-    trafficPersonnel: 89,
-    investigators: 67,
-    chiefs: 23,
-    admins: 8,
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    newUsersThisMonth: 0,
+    trafficPersonnel: 0,
+    investigators: 0,
+    chiefs: 0,
+    admins: 0,
     systemHealth: 99.8,
-    activeIncidents: 15,
-    resolvedToday: 8,
-    pendingReports: 23,
-  };
+    activeIncidents: 0,
+    resolvedToday: 0,
+    pendingReports: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch all users to calculate statistics
+        const users = await userService.getAllUsers() as any[];
+        
+        // Calculate user statistics
+        const totalUsers = users.length;
+        const activeUsers = users.filter((user: any) => user.isActive).length;
+        const inactiveUsers = totalUsers - activeUsers;
+        
+        // Count users by role
+        const roleCounts = users.reduce((acc: any, user: any) => {
+          acc[user.role] = (acc[user.role] || 0) + 1;
+          return acc;
+        }, {});
+        
+        // Calculate new users this month (mock for now)
+        const newUsersThisMonth = Math.floor(Math.random() * 20) + 5;
+        
+        setStats({
+          totalUsers,
+          activeUsers,
+          inactiveUsers,
+          newUsersThisMonth,
+          trafficPersonnel: roleCounts.traffic || 0,
+          investigators: roleCounts.investigator || 0,
+          chiefs: roleCounts.chief || 0,
+          admins: roleCounts.admin || 0,
+          systemHealth: 99.8,
+          activeIncidents: 15, // Mock data
+          resolvedToday: 8, // Mock data
+          pendingReports: 23, // Mock data
+        });
+        
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load user statistics.");
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const recentActivity = [
     {
@@ -149,71 +196,91 @@ export function AdminDashboard() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* System Overview Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Users
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUsers}</div>
-                <p className="text-xs text-muted-foreground">
-                  +{stats.newUsersThisMonth} from last month
-                </p>
-              </CardContent>
-            </Card>
+          {loading ? (
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">-</div>
+                      <p className="text-xs text-muted-foreground">Loading...</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-8">{error}</div>
+          ) : (
+            // System Overview Stats
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Users
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    +{stats.newUsersThisMonth} from last month
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active Users
-                </CardTitle>
-                <UserCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.activeUsers}</div>
-                <p className="text-xs text-muted-foreground">
-                  {((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}%
-                  of total
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Active Users
+                  </CardTitle>
+                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.activeUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}%
+                    of total
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  System Health
-                </CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.systemHealth}%</div>
-                <p className="text-xs text-muted-foreground">
-                  All systems operational
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    System Health
+                  </CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.systemHealth}%</div>
+                  <p className="text-xs text-muted-foreground">
+                    All systems operational
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active Incidents
-                </CardTitle>
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.activeIncidents}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.resolvedToday} resolved today
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Active Incidents
+                  </CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {stats.activeIncidents}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.resolvedToday} resolved today
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* User Role Distribution */}
           <div className="grid gap-6 md:grid-cols-2">

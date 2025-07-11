@@ -78,6 +78,7 @@ PATCH /incidents/:id
 Update an existing incident by ID.
 DELETE /incidents/:id
 Delete an incident by ID.
+
 📄 Report API
 POST /reports
 Create a new report linked to an incident.
@@ -91,6 +92,8 @@ DELETE /reports/:id
 Remove a report by ID.
 GET /reports/incident/:incidentId
 Get a report associated with a specific incident.
+
+
 📸 Evidence API
 POST /evidence
 Upload a new evidence item (photo, video, etc.).
@@ -104,6 +107,8 @@ DELETE /evidence/:id
 Delete evidence by ID.
 GET /evidence/incident/:incidentId
 Fetch all evidence items linked to a specific incident.
+
+
 🚗 Vehicle API
 POST /vehicles
 Register a new vehicle involved in an incident.
@@ -119,6 +124,8 @@ GET /vehicles
 List all vehicles.
 GET /vehicles/incident/:incidentId
 List vehicles involved in a specific incident.
+
+
 👤 Person API
 POST /persons
 Register a new person (victim, witness, driver, etc.).
@@ -132,7 +139,11 @@ DELETE /persons/:id
 Remove a person from the system.
 GET /persons/incident/:incidentId
 List persons linked to a specific incident.
+
+
 👤 User API
+POST /users
+Description: Create user 
 GET /users
 Description: Get a list of all users.
  Query Params (optional):
@@ -240,3 +251,5 @@ Response:
 
 
 404 Not Found if user not found
+
+

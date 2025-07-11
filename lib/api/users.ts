@@ -31,8 +31,25 @@ export const userService = {
     return apiService.get(`/users/email/${email}`);
   },
 
+  // Create a new user
+  // Note: This endpoint might not exist in your current API
+  // You may need to add POST /users to your NestJS backend
+  createUser: async (userData: any) => {
+    return apiService.post('/users', userData);
+  },
+
   // Update user by ID
   updateUser: async (id: string, data: any) => {
     return apiService.patch(`/users/${id}`, data);
+  },
+
+  // Delete user by ID
+  deleteUser: async (id: string) => {
+    return apiService.delete(`/users/${id}`);
+  },
+
+  // Get user statistics (for admin dashboard)
+  getUserStats: async () => {
+    return apiService.get('/users/stats');
   },
 }; 

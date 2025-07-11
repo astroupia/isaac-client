@@ -37,7 +37,9 @@ import evidenceService from "@/lib/api/evidence";
 import { apiService } from "@/lib/api/base";
 import mediaService from "@/lib/api/media";
 import { reportService } from "@/lib/api/reports";
+import { personService } from "@/lib/api/persons";
 import { ReportType, ReportStatus } from "@/app/types/report";
+import { ICreatePersonDto } from "@/types/person";
 
 interface IncidentData {
   incidentLocation: string;
@@ -64,21 +66,6 @@ interface Vehicle {
   damageSeverity?: string;
   damageAreas: string[];
   airbagDeployed?: boolean;
-}
-
-interface Person {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  age?: number;
-  gender?: string;
-  role: "driver" | "passenger" | "pedestrian" | "witness" | "other";
-  contactInfo?: {
-    phoneNumber?: string;
-    email?: string;
-    address?: string;
-  };
-  statement?: string;
 }
 
 interface Evidence {
@@ -130,7 +117,7 @@ export function NewIncidentForm() {
   });
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [persons, setPersons] = useState<Person[]>([]);
+  const [persons, setPersons] = useState<ICreatePersonDto[]>([]);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -305,9 +292,29 @@ export function NewIncidentForm() {
       console.log('Creating persons...');
       const personIds: string[] = [];
       for (const p of persons) {
-        const personPayload = { ...p };
-        const createdPerson = await apiService.post("/persons", personPayload);
-        personIds.push((createdPerson as any).id || (createdPerson as any)._id);
+        console.log('Original person data:', p);
+        // Only pick the fields that exist in ICreatePersonDto
+        const {
+          firstName, lastName, age, gender, role, status,
+          contactNumber, email, address, licenseNumber, insuranceInfo,
+          medicalConditions, emergencyContact, incidentIds, vehicleIds, evidenceIds
+        } = p;
+        const personPayload = {
+          firstName, lastName, age, gender, role, status,
+          contactNumber, email, address, licenseNumber, insuranceInfo,
+          medicalConditions, emergencyContact, incidentIds, vehicleIds, evidenceIds
+        };
+        console.log('Person payload being sent to API:', personPayload);
+        console.log('Person payload JSON:', JSON.stringify(personPayload, null, 2));
+        try {
+          const createdPerson = await personService.createPerson(personPayload);
+          personIds.push((createdPerson as any).id || (createdPerson as any)._id);
+        } catch (error: any) {
+          console.error('Error creating person:', error);
+          console.error('Error response:', error.response?.data);
+          console.error('Error status:', error.response?.status);
+          throw error; // Re-throw to stop the process
+        }
       }
 
       // 5. Create the incident with all IDs

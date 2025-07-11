@@ -25,7 +25,9 @@ export function TrafficReports() {
       setError(null)
       try {
         const data = await reportService.getAllReports()
-        setReports(data)
+        // Map reports so each has an id field
+        const mappedReports = data.map((report: any) => ({ ...report, id: report.id || report._id }))
+        setReports(mappedReports)
       } catch (err: any) {
         setError("Failed to load reports")
       } finally {
