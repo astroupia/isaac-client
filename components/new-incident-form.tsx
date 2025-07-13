@@ -308,7 +308,7 @@ export function NewIncidentForm() {
         console.log('Person payload JSON:', JSON.stringify(personPayload, null, 2));
         try {
           const createdPerson = await personService.createPerson(personPayload);
-          personIds.push((createdPerson as any).id || (createdPerson as any)._id);
+        personIds.push((createdPerson as any).id || (createdPerson as any)._id);
         } catch (error: any) {
           console.error('Error creating person:', error);
           console.error('Error response:', error.response?.data);

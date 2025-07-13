@@ -231,26 +231,26 @@ export function PersonForm({ persons, onChange }: PersonFormProps) {
             <CardContent className="space-y-4">
               {/* Role and Status Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Role *</Label>
-                  <Select
-                    value={person.role}
-                    onValueChange={(value) => updatePerson(index, "role", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roleOptions.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <span className="flex items-center gap-2">
-                            <span>{role.icon}</span>
-                            {role.label}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <Label>Role *</Label>
+                <Select
+                  value={person.role}
+                  onValueChange={(value) => updatePerson(index, "role", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roleOptions.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <span className="flex items-center gap-2">
+                          <span>{role.icon}</span>
+                          {role.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Status *</Label>

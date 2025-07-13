@@ -6,6 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { 
   ArrowLeft, 
@@ -34,7 +38,10 @@ import {
   Cloud,
   Heart,
   Shield,
-  Info
+  Info,
+  Edit,
+  Save,
+  X
 } from "lucide-react"
 import Link from "next/link"
 import reportService from "@/lib/api/reports"
@@ -52,9 +59,10 @@ import { PersonRole, PersonStatus, PersonGender } from "@/types/person"
 
 interface TrafficReportDetailProps {
   id: string
+  mode?: string
 }
 
-export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
+export function TrafficReportDetail({ id, mode }: TrafficReportDetailProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +71,8 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
   const [evidence, setEvidence] = useState<any[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
   const [persons, setPersons] = useState<any[]>([])
+  const [isEditMode, setIsEditMode] = useState(mode === 'edit')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     async function fetchAll() {
@@ -106,7 +116,7 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
           console.log('Loading persons for incident:', incidentId);
           console.log('Incident data:', incidentData);
           console.log('Calling personService.getIncidentPersons with incidentId:', incidentId);
-          const personsData = await personService.getIncidentPersons(incidentId)
+        const personsData = await personService.getIncidentPersons(incidentId)
           console.log('Persons data loaded:', personsData);
           console.log('Persons data type:', typeof personsData);
           console.log('Persons data length:', Array.isArray(personsData) ? personsData.length : 'Not an array');
@@ -259,12 +269,12 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
       }
       // If it's a date string, calculate age
       const birth = new Date(age)
-      const today = new Date()
+    const today = new Date()
       const calculatedAge = today.getFullYear() - birth.getFullYear()
-      const monthDiff = today.getMonth() - birth.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    const monthDiff = today.getMonth() - birth.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
         return `${calculatedAge - 1} years`
-      }
+    }
       return `${calculatedAge} years`
     }
     if (age instanceof Date) {
@@ -285,6 +295,65 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
     const i = Math.floor(Math.log(bytes) / Math.log(1024))
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
   }
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save report changes
+      await reportService.updateReport(report._id || report.id, report);
+      
+      // Save incident changes if incident exists
+      if (incident && incident._id) {
+        // Prepare incident data for API
+        const incidentData = {
+          incidentLocation: incident.incidentLocation,
+          incidentType: incident.incidentType,
+          incidentSeverity: incident.incidentSeverity,
+          dateTime: incident.dateTime,
+          numberOfCasualties: incident.numberOfCasualties,
+          incidentDescription: incident.incidentDescription,
+          weatherConditions: Array.isArray(incident.weatherConditions) ? incident.weatherConditions : [],
+          roadConditions: Array.isArray(incident.roadConditions) ? incident.roadConditions : [],
+        };
+        
+        await incidentService.updateIncident(incident._id, incidentData);
+      }
+      
+      toast({
+        title: "Changes saved successfully!",
+        description: "Your report and incident changes have been saved.",
+      });
+      setIsEditMode(false);
+    } catch (err: any) {
+      toast({
+        title: "Error saving changes",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateReport = (updatedReport: any) => {
+    setReport(updatedReport);
+  };
+
+  const handleUpdateIncident = (updatedIncident: any) => {
+    setIncident(updatedIncident);
+  };
+
+  const handleUpdatePersons = (updatedPersons: any[]) => {
+    setPersons(updatedPersons);
+  };
+
+  const handleUpdateVehicles = (updatedVehicles: any[]) => {
+    setVehicles(updatedVehicles);
+  };
+
+  const handleUpdateEvidence = (updatedEvidence: any[]) => {
+    setEvidence(updatedEvidence);
+  };
 
   const renderJsonContent = (content: any) => {
     if (!content) return <p className="text-gray-500 italic">No content available</p>
@@ -468,6 +537,236 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
     )
   }
 
+  const renderEditForm = () => {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-sm border-0 bg-white">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Edit className="h-5 w-5 text-primary" />
+              <span>Edit Report Details</span>
+            </CardTitle>
+            <CardDescription>Update the report information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Report Title</Label>
+                  <Input
+                    id="title"
+                    value={report.title || ''}
+                    onChange={(e) => handleUpdateReport({ ...report, title: e.target.value })}
+                    placeholder="Enter report title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Report Type</Label>
+                  <Select 
+                    value={report.type || ''} 
+                    onValueChange={(value) => handleUpdateReport({ ...report, type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select report type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="incident">Incident Report</SelectItem>
+                      <SelectItem value="investigation">Investigation Report</SelectItem>
+                      <SelectItem value="summary">Summary Report</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select 
+                    value={report.priority || ''} 
+                    onValueChange={(value) => handleUpdateReport({ ...report, priority: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low priority">Low Priority</SelectItem>
+                      <SelectItem value="medium priority">Medium Priority</SelectItem>
+                      <SelectItem value="high priority">High Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={report.status || ''} 
+                    onValueChange={(value) => handleUpdateReport({ ...report, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="submitted">Submitted</SelectItem>
+                      <SelectItem value="needs review">Needs Review</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assignedTo">Assigned To</Label>
+                  <Input
+                    id="assignedTo"
+                    value={report.assignedTo || ''}
+                    onChange={(e) => handleUpdateReport({ ...report, assignedTo: e.target.value })}
+                    placeholder="Enter assigned person"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={report.description || ''}
+                onChange={(e) => handleUpdateReport({ ...report, description: e.target.value })}
+                placeholder="Enter report description"
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const renderIncidentEditForm = () => {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-sm border-0 bg-white">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Edit className="h-5 w-5 text-primary" />
+              <span>Edit Incident Details</span>
+            </CardTitle>
+            <CardDescription>Update the incident information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="incidentLocation">Location</Label>
+                  <Input
+                    id="incidentLocation"
+                    value={incident.incidentLocation || ''}
+                    onChange={(e) => handleUpdateIncident({ ...incident, incidentLocation: e.target.value })}
+                    placeholder="Enter incident location"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="incidentType">Incident Type</Label>
+                  <Select 
+                    value={incident.incidentType || ''} 
+                    onValueChange={(value) => handleUpdateIncident({ ...incident, incidentType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select incident type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="traffic_collision">Traffic Collision</SelectItem>
+                      <SelectItem value="pedestrian_accident">Pedestrian Accident</SelectItem>
+                      <SelectItem value="vehicle_fire">Vehicle Fire</SelectItem>
+                      <SelectItem value="hazmat_spill">Hazmat Spill</SelectItem>
+                      <SelectItem value="weather_related">Weather Related</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="incidentSeverity">Severity</Label>
+                  <Select 
+                    value={incident.incidentSeverity || ''} 
+                    onValueChange={(value) => handleUpdateIncident({ ...incident, incidentSeverity: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minor">Minor</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="major">Major</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dateTime">Date & Time</Label>
+                  <Input
+                    id="dateTime"
+                    type="datetime-local"
+                    value={incident.dateTime ? new Date(incident.dateTime).toISOString().slice(0, 16) : ''}
+                    onChange={(e) => handleUpdateIncident({ ...incident, dateTime: new Date(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numberOfCasualties">Number of Casualties</Label>
+                  <Input
+                    id="numberOfCasualties"
+                    type="number"
+                    min="0"
+                    value={incident.numberOfCasualties || 0}
+                    onChange={(e) => handleUpdateIncident({ ...incident, numberOfCasualties: parseInt(e.target.value) || 0 })}
+                    placeholder="Enter number of casualties"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="incidentDescription">Description</Label>
+              <Textarea
+                id="incidentDescription"
+                value={incident.incidentDescription || ''}
+                onChange={(e) => handleUpdateIncident({ ...incident, incidentDescription: e.target.value })}
+                placeholder="Enter incident description"
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="weatherConditions">Weather Conditions</Label>
+                <Input
+                  id="weatherConditions"
+                  value={Array.isArray(incident.weatherConditions) ? incident.weatherConditions.join(', ') : ''}
+                  onChange={(e) => {
+                    const conditions = e.target.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                    handleUpdateIncident({ ...incident, weatherConditions: conditions });
+                  }}
+                  placeholder="Enter weather conditions (comma separated)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="roadConditions">Road Conditions</Label>
+                <Input
+                  id="roadConditions"
+                  value={Array.isArray(incident.roadConditions) ? incident.roadConditions.join(', ') : ''}
+                  onChange={(e) => {
+                    const conditions = e.target.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                    handleUpdateIncident({ ...incident, roadConditions: conditions });
+                  }}
+                  placeholder="Enter road conditions (comma separated)"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
@@ -512,10 +811,43 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
               Back to Reports
             </Link>
           </Button>
-          <Button variant="outline" className="hover:bg-gray-50">
-            <Download className="mr-2 h-4 w-4" />
-            Export Report
-          </Button>
+          <div className="flex items-center space-x-2">
+            {isEditMode ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditMode(false)}
+                  disabled={saving}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            ) : (
+              <>
+                {report.status?.toLowerCase() !== 'approved' && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditMode(true)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Report
+                  </Button>
+                )}
+                <Button variant="outline" className="hover:bg-gray-50">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Report
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -524,7 +856,7 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
               <div className="flex items-center space-x-3">
                 <FileText className="h-8 w-8 text-primary" />
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                  Report #{report._id || report.id}
+                  {isEditMode ? 'Editing ' : ''}Report #{report._id || report.id}
                 </h1>
               </div>
               <p className="text-lg text-gray-600">{report.title}</p>
@@ -615,78 +947,84 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
               <CardDescription>Summary of the report details and content</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Tag className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Report Type</p>
-                      <p className="text-sm text-gray-600">{report.type}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Priority Level</p>
-                      <p className="text-sm text-gray-600">{report.priority}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Created At</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(report.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Assigned To</p>
-                      <p className="text-sm text-gray-600">
-                        {report.assignedTo || "Unassigned"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {report.aiContribution && (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                    <Info className="h-4 w-4" />
-                    <span>AI Analysis</span>
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-blue-900">AI Contribution</p>
-                      <p className="text-lg font-semibold text-blue-700">{report.aiContribution}%</p>
-                    </div>
-                    {report.aiOverallConfidence && (
-                      <div className="bg-green-50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-green-900">Overall Confidence</p>
-                        <p className="text-lg font-semibold text-green-700">{report.aiOverallConfidence}%</p>
+              {isEditMode ? (
+                renderEditForm()
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Tag className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Report Type</p>
+                          <p className="text-sm text-gray-600">{report.type}</p>
+                        </div>
                       </div>
-                    )}
-                    {report.aiObjectDetection && (
-                      <div className="bg-purple-50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-purple-900">Object Detection</p>
-                        <p className="text-lg font-semibold text-purple-700">{report.aiObjectDetection}%</p>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Priority Level</p>
+                          <p className="text-sm text-gray-600">{report.priority}</p>
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Created At</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(report.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <User className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Assigned To</p>
+                          <p className="text-sm text-gray-600">
+                            {report.assignedTo || "Unassigned"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  
+                  {report.aiContribution && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                        <Info className="h-4 w-4" />
+                        <span>AI Analysis</span>
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-blue-50 rounded-lg p-3">
+                          <p className="text-xs font-medium text-blue-900">AI Contribution</p>
+                          <p className="text-lg font-semibold text-blue-700">{report.aiContribution}%</p>
+                        </div>
+                        {report.aiOverallConfidence && (
+                          <div className="bg-green-50 rounded-lg p-3">
+                            <p className="text-xs font-medium text-green-900">Overall Confidence</p>
+                            <p className="text-lg font-semibold text-green-700">{report.aiOverallConfidence}%</p>
+                          </div>
+                        )}
+                        {report.aiObjectDetection && (
+                          <div className="bg-purple-50 rounded-lg p-3">
+                            <p className="text-xs font-medium text-purple-900">Object Detection</p>
+                            <p className="text-lg font-semibold text-purple-700">{report.aiObjectDetection}%</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Report Content</h4>
+                    {renderJsonContent(report.content)}
+                  </div>
+                </>
               )}
-              
-              <Separator />
-              
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Report Content</h4>
-                {renderJsonContent(report.content)}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -701,97 +1039,103 @@ export function TrafficReportDetail({ id }: TrafficReportDetailProps) {
               <CardDescription>Information about the related incident</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <MapPin className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Location</p>
-                      <p className="text-sm text-gray-600">{incident.incidentLocation}</p>
+              {isEditMode ? (
+                renderIncidentEditForm()
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <MapPin className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Location</p>
+                          <p className="text-sm text-gray-600">{incident.incidentLocation}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Tag className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Type</p>
+                          <p className="text-sm text-gray-600">{getIncidentTypeLabel(incident.incidentType)}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Badge className={`${getIncidentSeverityColor(incident.incidentSeverity)} border`}>
+                          {incident.incidentSeverity}
+                        </Badge>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Severity</p>
+                          <p className="text-sm text-gray-600 capitalize">{incident.incidentSeverity}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Date & Time</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(incident.dateTime).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Tag className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Type</p>
-                      <p className="text-sm text-gray-600">{getIncidentTypeLabel(incident.incidentType)}</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <Users className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Number of Casualties</p>
+                        <p className="text-sm text-gray-600">{incident.numberOfCasualties || 0}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Badge className={`${getIncidentSeverityColor(incident.incidentSeverity)} border`}>
-                      {incident.incidentSeverity}
-                    </Badge>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Severity</p>
-                      <p className="text-sm text-gray-600 capitalize">{incident.incidentSeverity}</p>
+                  
+                  {incident.weatherConditions && incident.weatherConditions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                        <Cloud className="h-4 w-4" />
+                        <span>Weather Conditions</span>
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {incident.weatherConditions.map((condition: string, index: number) => (
+                          <Badge key={index} variant="outline" className="bg-blue-50">
+                            {condition}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Calendar className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Date & Time</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(incident.dateTime).toLocaleString()}
+                  )}
+
+                  {incident.roadConditions && incident.roadConditions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                        <Car className="h-4 w-4" />
+                        <span>Road Conditions</span>
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {incident.roadConditions.map((condition: string, index: number) => (
+                          <Badge key={index} variant="outline" className="bg-orange-50">
+                            {condition}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Description</h4>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {incident.incidentDescription}
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Users className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Number of Casualties</p>
-                    <p className="text-sm text-gray-600">{incident.numberOfCasualties || 0}</p>
-                  </div>
-                </div>
-              </div>
-              
-              {incident.weatherConditions && incident.weatherConditions.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                    <Cloud className="h-4 w-4" />
-                    <span>Weather Conditions</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {incident.weatherConditions.map((condition: string, index: number) => (
-                      <Badge key={index} variant="outline" className="bg-blue-50">
-                        {condition}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                </>
               )}
-
-              {incident.roadConditions && incident.roadConditions.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                    <Car className="h-4 w-4" />
-                    <span>Road Conditions</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {incident.roadConditions.map((condition: string, index: number) => (
-                      <Badge key={index} variant="outline" className="bg-orange-50">
-                        {condition}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <Separator />
-              
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Description</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {incident.incidentDescription}
-                  </p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

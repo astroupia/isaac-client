@@ -32,10 +32,12 @@ import {
   User,
   Zap,
 } from "lucide-react";
+import { reportService } from "@/lib/api/reports";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [role, setRole] = useState<string>("traffic");
+  const [userReportsCount, setUserReportsCount] = useState<number>(0);
 
   // Determine role based on URL path
   useEffect(() => {
@@ -50,10 +52,40 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
+  // Fetch user's reports count
+  useEffect(() => {
+    async function fetchUserReportsCount() {
+      try {
+        // Fetch current user
+        const userResponse = await fetch("/api/auth/me");
+        const userData = await userResponse.json();
+
+        // Fetch all reports
+        const allReports = await reportService.getAllReports();
+        
+        // Filter reports to show only the current user's reports
+        const userReports = allReports.filter((report: any) => {
+          const reportCreatedBy = report.createdBy?._id || report.createdBy?.id || report.createdBy;
+          const userId = userData._id || userData.id;
+          return reportCreatedBy === userId;
+        });
+
+        setUserReportsCount(userReports.length);
+      } catch (error) {
+        console.error("Error fetching user reports count:", error);
+        setUserReportsCount(0);
+      }
+    }
+
+    if (role === "traffic") {
+      fetchUserReportsCount();
+    }
+  }, [role]);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <DashboardSidebar role={role} />
+        <DashboardSidebar role={role} userReportsCount={userReportsCount} />
         <div className="flex-1 flex flex-col min-w-0 w-full">
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 w-full">
             <SidebarTrigger />
@@ -68,7 +100,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DashboardSidebar({ role }: { role: string }) {
+function DashboardSidebar({ role, userReportsCount }: { role: string; userReportsCount: number }) {
   const pathname = usePathname();
 
   const isActive = (path: string) => {
@@ -161,7 +193,7 @@ function DashboardSidebar({ role }: { role: string }) {
                       className="ml-auto bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
                       variant="outline"
                     >
-                      3
+                      {userReportsCount}
                     </Badge>
                   </Link>
                 </SidebarMenuButton>
