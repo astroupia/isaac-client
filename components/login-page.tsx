@@ -18,8 +18,10 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { AlertCircle, Car, FileText, Shield, User } from "lucide-react";
 import { z } from "zod";
 
+
 // Import toast
 import { toast } from "@/components/ui/use-toast";
+
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
