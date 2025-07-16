@@ -42,6 +42,7 @@ export function UserForm({
     firstName: initialData?.firstName || "",
     lastName: initialData?.lastName || "",
     email: initialData?.email || "",
+    password: "", // Only used for creating new users
     role: initialData?.role || ("traffic" as UserRole),
     badgeId: initialData?.badgeId || "",
     department: initialData?.department || "",
@@ -70,6 +71,13 @@ export function UserForm({
     if (!formData.email.includes("@"))
       newErrors.email = "Valid email is required";
     if (!formData.role) newErrors.role = "Role is required";
+    
+    // Password is required only when creating a new user
+    if (!isEditing && !formData.password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (!isEditing && formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,6 +97,28 @@ export function UserForm({
       phoneNumber: formData.phoneNumber || undefined,
       isActive: formData.isActive,
     };
+
+    // Include password only when creating a new user
+    if (!isEditing && formData.password) {
+      (submitData as any).password = formData.password;
+    }
+
+    // Include role-specific fields
+    switch (formData.role) {
+      case "traffic":
+        if (formData.district) (submitData as any).district = formData.district;
+        if (formData.vehicleId) (submitData as any).vehicleId = formData.vehicleId;
+        if (formData.shift) (submitData as any).shift = formData.shift;
+        break;
+      case "investigator":
+        if (formData.specialization.length > 0) (submitData as any).specialization = formData.specialization;
+        if (formData.maxCaseload) (submitData as any).maxCaseload = formData.maxCaseload;
+        break;
+      case "admin":
+        if (formData.accessLevel) (submitData as any).accessLevel = formData.accessLevel;
+        if (formData.systemPermissions.length > 0) (submitData as any).systemPermissions = formData.systemPermissions;
+        break;
+    }
 
     onSubmit(submitData);
   };
@@ -496,6 +526,28 @@ export function UserForm({
                 <p className="text-sm text-red-500">{errors.email}</p>
               )}
             </div>
+
+            {!isEditing && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className={errors.password ? "border-red-500" : ""}
+                  placeholder="Minimum 6 characters"
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Password is required for new user accounts
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">

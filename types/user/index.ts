@@ -25,8 +25,8 @@ export interface IUser {
   phoneNumber?: string;
   isActive: boolean;
   lastLogin?: Date;
+
   // Traffic Personnel specific fields
-  
   district?: string;
   vehicleId?: string;
   shift?: UserShift;

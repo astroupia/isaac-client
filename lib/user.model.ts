@@ -54,6 +54,11 @@ export interface IUser extends Document {
   accessLevel?: number;
   systemPermissions?: string[];
 
+  // Virtual properties
+  displayName: string;
+  fullNameWithRole: string;
+  initials: string;
+  
   // Virtual methods
   getDisplayName(): string;
   getFullNameWithRole(): string;
