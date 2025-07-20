@@ -183,6 +183,29 @@ export function TrafficReports() {
     completed: reports.filter(r => ['approved', 'completed'].includes(r.status?.toLowerCase())).length,
   }
 
+  // Download JSON handler
+  const handleDownload = (report: any) => {
+    const json = JSON.stringify(report, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const filename = `report-${report.id || report._id || 'incident'}.json`;
+    // @ts-ignore: msSaveOrOpenBlob is for IE
+    if (typeof window !== 'undefined' && (window.navigator as any).msSaveOrOpenBlob) {
+      // @ts-ignore
+      (window.navigator as any).msSaveOrOpenBlob(blob, filename);
+    } else {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -372,7 +395,7 @@ export function TrafficReports() {
                                 </Link>
                               </Button>
                             )}
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => handleDownload(report)}>
                               <Download className="h-4 w-4" />
                             </Button>
                           </div>
