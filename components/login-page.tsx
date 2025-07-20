@@ -145,7 +145,7 @@ export function LoginPage() {
       } else {
         toast({
           title: "Login Error",
-          description: data.error || "Login failed. Please check your credentials.",
+          description: data.error === "Invalid credentials" ? "Wrong credentials" : (data.error || "Login failed. Please check your credentials."),
           variant: "destructive",
           duration: 4000,
         });
