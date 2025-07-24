@@ -1,16 +1,23 @@
-import { apiService } from './base';
-import { ICreateReportDto, IReport, IUpdateReportDto } from '@/app/types/report';
+import { apiService } from "./base";
+import {
+  ICreateReportDto,
+  IReport,
+  IUpdateReportDto,
+} from "@/app/types/report";
 
 export const reportService = {
   createReport: async (data: ICreateReportDto): Promise<IReport> => {
-    return apiService.post<IReport>('/reports', data);
+    return apiService.post<IReport>("/reports", data);
   },
 
   getReport: async (id: string): Promise<IReport> => {
     return apiService.get<IReport>(`/reports/${id}`);
   },
 
-  updateReport: async (id: string, data: IUpdateReportDto): Promise<IReport> => {
+  updateReport: async (
+    id: string,
+    data: IUpdateReportDto
+  ): Promise<IReport> => {
     return apiService.patch<IReport>(`/reports/${id}`, data);
   },
 
@@ -24,6 +31,10 @@ export const reportService = {
 
   getAllReports: async (): Promise<IReport[]> => {
     return apiService.get<IReport[]>(`/reports`);
+  },
+
+  getReportsByAssignedUser: async (userId: string): Promise<IReport[]> => {
+    return apiService.get<IReport[]>(`/reports?assignedTo=${userId}`);
   },
 };
 

@@ -1,14 +1,14 @@
-import { apiService } from './base';
+import { apiService } from "./base";
 
 export const userService = {
   // Get all users
   getAllUsers: async () => {
-    return apiService.get('/users');
+    return apiService.get("/users");
   },
 
   // Get all active users
   getActiveUsers: async () => {
-    return apiService.get('/users/active');
+    return apiService.get("/users/active");
   },
 
   // Get users by role
@@ -35,7 +35,7 @@ export const userService = {
   // Note: This endpoint might not exist in your current API
   // You may need to add POST /users to your NestJS backend
   createUser: async (userData: any) => {
-    return apiService.post('/users', userData);
+    return apiService.post("/users", userData);
   },
 
   // Update user by ID
@@ -50,6 +50,6 @@ export const userService = {
 
   // Get user statistics (for admin dashboard)
   getUserStats: async () => {
-    return apiService.get('/users/stats');
+    return apiService.get("/users/stats");
   },
-}; 
+};
