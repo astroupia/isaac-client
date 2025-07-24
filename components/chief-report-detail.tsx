@@ -27,70 +27,333 @@ import {
   AlertTriangle,
   Eye,
   Calendar,
+  ExternalLink,
+  Image,
+  Video,
+  File,
+  Mic,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useChiefReportDetail } from "@/hooks/useChiefReportDetail";
+import { useToast } from "@/hooks/use-toast";
+import { AiAnalysisDisplay } from "./ai-analysis-display";
+import { ReportStatus } from "@/app/types/report";
 
 interface ChiefReportDetailProps {
   reportId: string;
 }
 
 export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
+  const { toast } = useToast();
   const [reviewNotes, setReviewNotes] = useState("");
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  // Mock data - in real app, this would be fetched based on reportId
-  const report = {
-    id: reportId,
-    title: "Multi-vehicle Accident - Bridge Intersection",
-    investigator: "John Smith",
-    submittedDate: "2024-01-10",
-    incidentDate: "2024-01-08",
-    status: "pending_review",
-    aiConfidence: 94,
-    priority: "high",
-    location: "Bridge St & Main Ave",
-    summary:
-      "Three-vehicle collision at controlled intersection during peak hours. AI analysis indicates primary cause was failure to yield right of way.",
-    findings: [
-      "Vehicle A (sedan) failed to yield at intersection",
-      "Traffic signal was functioning normally",
-      "Weather conditions were clear",
-      "No evidence of impairment or distraction",
-      "Speed analysis shows Vehicle A was traveling 5 mph over limit",
-    ],
-    recommendations: [
-      "Cite Vehicle A driver for failure to yield",
-      "No criminal charges recommended",
-      "Suggest defensive driving course",
-      "Review intersection signal timing",
-    ],
-    evidence: [
-      { type: "photo", count: 12, description: "Scene photographs" },
-      { type: "video", count: 2, description: "Traffic camera footage" },
-      { type: "witness", count: 3, description: "Witness statements" },
-      { type: "measurement", count: 8, description: "Scene measurements" },
-    ],
-  };
+  const {
+    report,
+    evidence,
+    aiResults,
+    investigator,
+    incident,
+    aiConfidence,
+    isLoading,
+    error,
+    updateReportStatus,
+    refreshData,
+  } = useChiefReportDetail(reportId);
 
   const handleApprove = async () => {
+    if (!report) return;
+
+    if (report.status === ReportStatus.APPROVED) {
+      toast({
+        title: "Already Approved",
+        description: "This report has already been approved.",
+        variant: "default",
+      });
+      return;
+    }
+
     setIsApproving(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await updateReportStatus(ReportStatus.APPROVED);
+      toast({
+        title: "Report Approved",
+        description: "The report has been successfully approved.",
+        variant: "default",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Approval Failed",
+        description: error.message || "Failed to approve the report.",
+        variant: "destructive",
+      });
+    } finally {
       setIsApproving(false);
-      // In real app, would redirect or show success message
-    }, 2000);
+    }
   };
 
   const handleReject = async () => {
+    if (!report) return;
+
     setIsRejecting(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await updateReportStatus(ReportStatus.REJECTED);
+      toast({
+        title: "Report Returned for Revision",
+        description: "The report has been returned for revision.",
+        variant: "default",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "Failed to reject the report.",
+        variant: "destructive",
+      });
+    } finally {
       setIsRejecting(false);
-      // In real app, would redirect or show success message
-    }, 2000);
+    }
   };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case ReportStatus.SUBMITTED:
+        return (
+          <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending Review
+          </Badge>
+        );
+      case ReportStatus.APPROVED:
+        return (
+          <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Approved
+          </Badge>
+        );
+      case ReportStatus.REJECTED:
+        return (
+          <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+            <XCircle className="h-3 w-3 mr-1" />
+            Returned for Revision
+          </Badge>
+        );
+      case ReportStatus.DRAFT:
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+            <FileText className="h-3 w-3 mr-1" />
+            Draft
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case "high":
+        return (
+          <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+            High Priority
+          </Badge>
+        );
+      case "medium":
+        return (
+          <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+            Medium Priority
+          </Badge>
+        );
+      case "low":
+        return (
+          <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+            Low Priority
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{priority || "Unknown"}</Badge>;
+    }
+  };
+
+  const getEvidenceIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "image":
+      case "photo":
+        return <Image className="h-4 w-4" />;
+      case "video":
+        return <Video className="h-4 w-4" />;
+      case "audio":
+        return <Mic className="h-4 w-4" />;
+      default:
+        return <File className="h-4 w-4" />;
+    }
+  };
+
+  const handleViewEvidence = (fileUrl: string) => {
+    if (fileUrl) {
+      window.open(fileUrl, "_blank");
+    }
+  };
+
+  // Extract key findings and recommendations from AI results
+  const extractKeyFindings = () => {
+    if (!aiResults || aiResults.length === 0) return [];
+
+    const findings: string[] = [];
+    aiResults.forEach((result) => {
+      // Extract from analysis result text
+      if (result.analysisResult?.analysis) {
+        const analysisText = result.analysisResult.analysis;
+        const formattedText = formatAnalysisText(analysisText);
+
+        // Look for key findings in the analysis text
+        const lines = formattedText.split("\n");
+        lines.forEach((line: string) => {
+          const trimmedLine = line.trim();
+          if (
+            trimmedLine.startsWith("•") ||
+            trimmedLine.startsWith("-") ||
+            trimmedLine.includes("finding") ||
+            trimmedLine.includes("detected") ||
+            trimmedLine.includes("identified") ||
+            trimmedLine.match(/^\d+\.\s/)
+          ) {
+            // Format the finding text
+            const formattedLine = formatAnalysisText(trimmedLine);
+            if (formattedLine && !findings.includes(formattedLine)) {
+              findings.push(formattedLine);
+            }
+          }
+        });
+      }
+
+      // Extract from recommendations
+      if (result.recommendations?.investigationPriority) {
+        const priority = formatAnalysisText(
+          `Investigation Priority: ${result.recommendations.investigationPriority}`
+        );
+        if (!findings.includes(priority)) {
+          findings.push(priority);
+        }
+      }
+      if (result.recommendations?.additionalEvidenceNeeded) {
+        result.recommendations.additionalEvidenceNeeded.forEach(
+          (evidence: string) => {
+            const formatted = formatAnalysisText(evidence);
+            if (formatted && !findings.includes(formatted)) {
+              findings.push(formatted);
+            }
+          }
+        );
+      }
+    });
+    return findings.slice(0, 5); // Limit to 5 findings
+  };
+
+  // Helper function to format text (same as ai-analysis-display.tsx)
+  const formatAnalysisText = (text: string): string => {
+    if (!text) return "";
+
+    return (
+      text
+        // Remove asterisks from headers
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        // Convert bullet points to proper format
+        .replace(/^\s*•\s*/gm, "• ")
+        .replace(/^\s*\*\s*/gm, "• ")
+        // Clean up extra whitespace
+        .replace(/\n\s*\n/g, "\n\n")
+        .trim()
+    );
+  };
+
+  const extractRecommendations = () => {
+    if (!aiResults || aiResults.length === 0) return [];
+
+    const recommendations: string[] = [];
+    aiResults.forEach((result) => {
+      // Extract from analysis result text
+      if (result.analysisResult?.analysis) {
+        const analysisText = result.analysisResult.analysis;
+        const formattedText = formatAnalysisText(analysisText);
+
+        // Look for recommendations in the analysis text
+        const lines = formattedText.split("\n");
+        lines.forEach((line: string) => {
+          const trimmedLine = line.trim();
+          if (
+            trimmedLine.includes("recommend") ||
+            trimmedLine.includes("suggest") ||
+            trimmedLine.includes("should") ||
+            trimmedLine.includes("advise") ||
+            trimmedLine.startsWith("• ") ||
+            trimmedLine.match(/^\d+\.\s/)
+          ) {
+            // Format the recommendation text
+            const formattedLine = formatAnalysisText(trimmedLine);
+            if (formattedLine && !recommendations.includes(formattedLine)) {
+              recommendations.push(formattedLine);
+            }
+          }
+        });
+      }
+
+      // Extract from recommendations object
+      if (result.recommendations?.safetyRecommendations) {
+        result.recommendations.safetyRecommendations.forEach((rec: string) => {
+          const formatted = formatAnalysisText(rec);
+          if (formatted && !recommendations.includes(formatted)) {
+            recommendations.push(formatted);
+          }
+        });
+      }
+      if (result.recommendations?.expertConsultation) {
+        result.recommendations.expertConsultation.forEach((rec: string) => {
+          const formatted = formatAnalysisText(rec);
+          if (formatted && !recommendations.includes(formatted)) {
+            recommendations.push(formatted);
+          }
+        });
+      }
+      if (result.recommendations?.legalImplications) {
+        result.recommendations.legalImplications.forEach((rec: string) => {
+          const formatted = formatAnalysisText(rec);
+          if (formatted && !recommendations.includes(formatted)) {
+            recommendations.push(formatted);
+          }
+        });
+      }
+    });
+    return recommendations.slice(0, 5); // Limit to 5 recommendations
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <span className="ml-4 text-muted-foreground">
+          Loading report details...
+        </span>
+      </div>
+    );
+  }
+
+  if (error || !report) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <p className="text-red-600 font-medium mb-4">
+          {error || "Report not found."}
+        </p>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/chief/reports">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Reports
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 w-full">
@@ -105,15 +368,12 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Report Review</h1>
             <p className="text-muted-foreground">
-              #{report.id} - {report.title}
+              #{report._id.toString().slice(-6)} - {report.title}
             </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">
-            <Clock className="h-3 w-3 mr-1" />
-            Pending Review
-          </Badge>
+          {getStatusBadge(report.status)}
           <Button variant="outline" size="sm">
             <Print className="h-4 w-4 mr-2" />
             Print
@@ -133,8 +393,30 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">{report.investigator}</div>
-            <p className="text-xs text-muted-foreground">Lead investigator</p>
+            <div className="text-lg font-bold">
+              {investigator
+                ? `${investigator.firstName} ${investigator.lastName}`
+                : report.assignedTo
+                ? `Investigator ${report.assignedTo.toString().slice(-6)}`
+                : "Unassigned"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {investigator
+                ? "Lead investigator"
+                : report.assignedTo
+                ? "ID only (fetch failed)"
+                : "No assignment"}
+            </p>
+            {/* Debug info - remove in production */}
+            {process.env.NODE_ENV === "development" && (
+              <div className="text-xs text-gray-400 mt-1">
+                {investigator
+                  ? "User data loaded"
+                  : report.assignedTo
+                  ? `ID: ${report.assignedTo}`
+                  : "No ID"}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -145,9 +427,22 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold text-green-500">
-              {report.aiConfidence}%
+              {aiConfidence
+                ? `${(aiConfidence * 100).toFixed(1)}%`
+                : report.aiContribution
+                ? `${(report.aiContribution * 100).toFixed(1)}%`
+                : "N/A"}
             </div>
-            <Progress value={report.aiConfidence} className="h-2 mt-2" />
+            <Progress
+              value={
+                aiConfidence
+                  ? aiConfidence * 100
+                  : report.aiContribution
+                  ? report.aiContribution * 100
+                  : 0
+              }
+              className="h-2 mt-2"
+            />
           </CardContent>
         </Card>
 
@@ -157,7 +452,13 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">{report.incidentDate}</div>
+            <div className="text-lg font-bold">
+              {incident?.dateTime
+                ? new Date(incident.dateTime).toLocaleDateString()
+                : report.createdAt
+                ? new Date(report.createdAt).toLocaleDateString()
+                : "N/A"}
+            </div>
             <p className="text-xs text-muted-foreground">Date of occurrence</p>
           </CardContent>
         </Card>
@@ -168,11 +469,13 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
-              High Priority
-            </Badge>
+            {getPriorityBadge(report.content?.priority || "medium")}
             <p className="text-xs text-muted-foreground mt-1">
-              Requires immediate attention
+              {report.content?.priority === "high"
+                ? "Requires immediate attention"
+                : report.content?.priority === "medium"
+                ? "Standard priority"
+                : "Low priority case"}
             </p>
           </CardContent>
         </Card>
@@ -197,15 +500,13 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">Location</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {report.location}
-                  </p>
+                  <h4 className="font-medium mb-2">Report Type</h4>
+                  <p className="text-sm text-muted-foreground">{report.type}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Summary</h4>
+                  <h4 className="font-medium mb-2">Status</h4>
                   <p className="text-sm text-muted-foreground">
-                    {report.summary}
+                    {report.status}
                   </p>
                 </div>
               </div>
@@ -219,12 +520,54 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {report.findings.map((finding, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-sm">{finding}</p>
-                    </div>
-                  ))}
+                  {extractKeyFindings().map(
+                    (finding: string, index: number) => {
+                      // Check if this is a bullet point
+                      if (finding.startsWith("• ")) {
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3"
+                          >
+                            <span className="text-primary mt-1">•</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {finding.substring(2)}
+                            </p>
+                          </div>
+                        );
+                      }
+                      // Check if this is a numbered list item
+                      if (/^\d+\.\s/.test(finding)) {
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3"
+                          >
+                            <span className="text-primary mt-1 font-medium">
+                              {finding.match(/^\d+/)?.[0]}.
+                            </span>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {finding.replace(/^\d+\.\s/, "")}
+                            </p>
+                          </div>
+                        );
+                      }
+                      // Regular finding
+                      return (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {finding}
+                          </p>
+                        </div>
+                      );
+                    }
+                  )}
+                  {extractKeyFindings().length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No key findings available from AI analysis.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -235,12 +578,54 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {report.recommendations.map((recommendation, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-sm">{recommendation}</p>
-                    </div>
-                  ))}
+                  {extractRecommendations().map(
+                    (recommendation: string, index: number) => {
+                      // Check if this is a bullet point
+                      if (recommendation.startsWith("• ")) {
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3"
+                          >
+                            <span className="text-green-500 mt-1">•</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {recommendation.substring(2)}
+                            </p>
+                          </div>
+                        );
+                      }
+                      // Check if this is a numbered list item
+                      if (/^\d+\.\s/.test(recommendation)) {
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3"
+                          >
+                            <span className="text-green-500 mt-1 font-medium">
+                              {recommendation.match(/^\d+/)?.[0]}.
+                            </span>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {recommendation.replace(/^\d+\.\s/, "")}
+                            </p>
+                          </div>
+                        );
+                      }
+                      // Regular recommendation
+                      return (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {recommendation}
+                          </p>
+                        </div>
+                      );
+                    }
+                  )}
+                  {extractRecommendations().length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No recommendations available from AI analysis.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -256,72 +641,81 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Debug info - remove in production */}
+              {process.env.NODE_ENV === "development" && (
+                <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-100 rounded">
+                  Debug: Evidence count: {evidence.length} | Report ID:{" "}
+                  {reportId}
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
-                {report.evidence.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="font-medium">{item.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.count} items
-                        </p>
+                {evidence.length > 0 ? (
+                  evidence.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {getEvidenceIcon(item.type)}
+                        <div>
+                          <p className="font-medium">
+                            {item.description || `Evidence ${index + 1}`}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.type} •{" "}
+                            {item.fileSize
+                              ? `${item.fileSize} KB`
+                              : "Unknown size"}
+                          </p>
+                        </div>
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          item.fileUrl && handleViewEvidence(item.fileUrl)
+                        }
+                        disabled={!item.fileUrl}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
-                    </Button>
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-8 text-muted-foreground">
+                    No evidence available for this report.
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="ai-analysis" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Brain className="h-5 w-5 mr-2" />
-                AI Analysis Results
-              </CardTitle>
-              <CardDescription>
-                Detailed AI-generated analysis and confidence metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-green-500">
-                      {report.aiConfidence}%
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Overall Confidence
-                    </p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-blue-500">98%</div>
-                    <p className="text-sm text-muted-foreground">
-                      Object Detection
-                    </p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-purple-500">
-                      91%
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Scene Reconstruction
-                    </p>
-                  </div>
+          {aiResults && aiResults.length > 0 ? (
+            aiResults.map((result, index) => (
+              <AiAnalysisDisplay key={index} result={result} />
+            ))
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Brain className="h-5 w-5 mr-2" />
+                  AI Analysis Results
+                </CardTitle>
+                <CardDescription>
+                  No AI analysis results available for this report
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No AI analysis has been performed on this report yet.</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="review" className="space-y-6">
@@ -329,29 +723,11 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2" />
-                Review & Decision
+                Review & Approval
               </CardTitle>
-              <CardDescription>
-                Provide your review and make a decision on this report
-              </CardDescription>
+              <CardDescription>Make a decision on this report</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Review Notes
-                  </label>
-                  <Textarea
-                    placeholder="Enter your review comments, feedback, or required changes..."
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    className="min-h-[120px]"
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
               <div className="space-y-4">
                 <h4 className="font-medium">Decision Actions</h4>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -369,7 +745,9 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Approve Report
+                        {report.status === ReportStatus.APPROVED
+                          ? "Already Approved"
+                          : "Approve Report"}
                       </>
                     )}
                   </Button>

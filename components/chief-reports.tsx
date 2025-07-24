@@ -1,111 +1,161 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ExportSuccessDialog } from "@/components/export-success-dialog"
-import { ArrowLeft, Brain, Download, Eye, FileText, Filter, Search, User } from "lucide-react"
-import Link from "next/link"
-import { reportService } from "@/lib/api/reports"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ExportSuccessDialog } from "@/components/export-success-dialog";
+import {
+  ArrowLeft,
+  Brain,
+  Download,
+  Eye,
+  FileText,
+  Filter,
+  Search,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { reportService } from "@/lib/api/reports";
+import { ReportStatus } from "@/app/types/report";
 
 export function ChiefReports() {
-  const [reports, setReports] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [exportDialog, setExportDialog] = useState<{
-    open: boolean
-    type: string
-    fileName: string
+    open: boolean;
+    type: string;
+    fileName: string;
   }>({
     open: false,
     type: "",
     fileName: "",
-  })
+  });
 
   useEffect(() => {
-    setLoading(true)
-    reportService.getAllReports()
+    setLoading(true);
+    reportService
+      .getAllReports()
       .then((data) => {
-        setReports(data)
-        setLoading(false)
+        setReports(data);
+        setLoading(false);
       })
       .catch((err) => {
-        setError("Failed to load reports.")
-        setLoading(false)
-      })
-  }, [])
+        setError("Failed to load reports.");
+        setLoading(false);
+      });
+  }, []);
 
   // Map backend report fields to UI fields
   const mappedReports = reports.map((report) => ({
     id: report._id || report.id,
     title: report.title,
-    investigator: report.assignedTo?.firstName ? `${report.assignedTo.firstName} ${report.assignedTo.lastName}` : "Unassigned",
+    investigator: report.assignedTo?.firstName
+      ? `${report.assignedTo.firstName} ${report.assignedTo.lastName}`
+      : "Unassigned",
     status: report.status?.toLowerCase() || "pending",
-    priority: report.priority?.toLowerCase() || "medium",
-    submitted: report.submittedAt ? new Date(report.submittedAt).toLocaleDateString() : "-",
-    aiConfidence: report.aiContribution || 0,
+    priority: report.content?.priority?.toLowerCase() || "medium",
+    submitted: report.submittedAt
+      ? new Date(report.submittedAt).toLocaleDateString()
+      : "-",
+    aiConfidence: report.aiContribution
+      ? Math.round(report.aiContribution * 100)
+      : 0,
     type: report.type || "-",
-  }))
+  }));
 
   const filteredReports = mappedReports.filter((report) => {
     const matchesSearch =
       report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.investigator.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.id?.toString().includes(searchTerm)
-    const matchesStatus = statusFilter === "all" || report.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+      report.id?.toString().includes(searchTerm);
+    const matchesStatus =
+      statusFilter === "all" || report.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleExport = (type: string) => {
-    const fileName = `${type.toLowerCase()}_reports_${new Date().toISOString().split("T")[0]}.pdf`
+    const fileName = `${type.toLowerCase()}_reports_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
     setExportDialog({
       open: true,
       type,
       fileName,
-    })
-  }
+    });
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending":
+      case ReportStatus.SUBMITTED:
         return (
           <Badge className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">
             Pending Review
           </Badge>
-        )
-      case "approved":
+        );
+      case ReportStatus.APPROVED:
         return (
-          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">Approved</Badge>
-        )
-      case "revision":
+          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+            Approved
+          </Badge>
+        );
+      case ReportStatus.REJECTED:
         return (
-          <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20">Needs Revision</Badge>
-        )
+          <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20">
+            Needs Revision
+          </Badge>
+        );
+      case ReportStatus.DRAFT:
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20">
+            Draft
+          </Badge>
+        );
+      case ReportStatus.PUBLISHED:
+        return (
+          <Badge className="bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/20">
+            Published
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>;
     }
-  }
+  };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge variant="destructive">High</Badge>
+        return <Badge variant="destructive">High</Badge>;
       case "medium":
         return (
-          <Badge className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">Medium</Badge>
-        )
+          <Badge className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">
+            Medium
+          </Badge>
+        );
       case "low":
-        return <Badge variant="outline">Low</Badge>
+        return <Badge variant="outline">Low</Badge>;
       default:
-        return <Badge variant="outline">{priority}</Badge>
+        return <Badge variant="outline">{priority}</Badge>;
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -120,51 +170,85 @@ export function ChiefReports() {
 
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Report Management</h1>
-        <p className="text-muted-foreground">Review, approve, and manage investigation reports from your team.</p>
+        <p className="text-muted-foreground">
+          Review, approve, and manage investigation reports from your team.
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Review
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
-            <p className="text-xs text-muted-foreground">Awaiting your approval</p>
+            <div className="text-2xl font-bold">
+              {
+                reports.filter((r) => r.status === ReportStatus.SUBMITTED)
+                  .length
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting your approval
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved This Week</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Approved This Week
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">+3 from last week</p>
+            <div className="text-2xl font-bold">
+              {
+                reports.filter((r) => {
+                  if (r.status !== ReportStatus.APPROVED) return false;
+                  if (!r.approvedAt) return false;
+                  const approvedDate = new Date(r.approvedAt);
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return approvedDate >= weekAgo;
+                }).length
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Approved in last 7 days
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Needs Revision</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Needs Revision
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">Returned for updates</p>
+            <div className="text-2xl font-bold">
+              {reports.filter((r) => r.status === ReportStatus.REJECTED).length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Returned for updates
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Review Time</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2.3h</div>
-            <p className="text-xs text-muted-foreground">-0.5h from last week</p>
+            <div className="text-2xl font-bold">{reports.length}</div>
+            <p className="text-xs text-muted-foreground">
+              All investigation reports
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -174,10 +258,15 @@ export function ChiefReports() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Investigation Reports</CardTitle>
-              <CardDescription>Manage and review reports from your investigation team</CardDescription>
+              <CardDescription>
+                Manage and review reports from your investigation team
+              </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={() => handleExport("All Reports")}>
+              <Button
+                variant="outline"
+                onClick={() => handleExport("All Reports")}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Export All
               </Button>
@@ -202,9 +291,17 @@ export function ChiefReports() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending Review</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="revision">Needs Revision</SelectItem>
+                <SelectItem value={ReportStatus.SUBMITTED}>
+                  Pending Review
+                </SelectItem>
+                <SelectItem value={ReportStatus.APPROVED}>Approved</SelectItem>
+                <SelectItem value={ReportStatus.REJECTED}>
+                  Needs Revision
+                </SelectItem>
+                <SelectItem value={ReportStatus.DRAFT}>Draft</SelectItem>
+                <SelectItem value={ReportStatus.PUBLISHED}>
+                  Published
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -217,12 +314,17 @@ export function ChiefReports() {
 
             <TabsContent value="list" className="space-y-4">
               {loading ? (
-                <div className="p-8 text-center text-muted-foreground">Loading reports...</div>
+                <div className="p-8 text-center text-muted-foreground">
+                  Loading reports...
+                </div>
               ) : error ? (
                 <div className="p-8 text-center text-red-500">{error}</div>
               ) : (
                 filteredReports.map((report) => (
-                  <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={report.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center space-x-3">
                         <h4 className="font-medium">
@@ -255,7 +357,9 @@ export function ChiefReports() {
                         </Link>
                       </Button>
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`/dashboard/chief/ai-insights/${report.id}`}>
+                        <Link
+                          href={`/dashboard/chief/ai-insights/${report.id}`}
+                        >
                           <Brain className="mr-2 h-4 w-4" />
                           AI Analysis
                         </Link>
@@ -266,9 +370,14 @@ export function ChiefReports() {
               )}
             </TabsContent>
 
-            <TabsContent value="grid" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <TabsContent
+              value="grid"
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+            >
               {loading ? (
-                <div className="p-8 text-center text-muted-foreground">Loading reports...</div>
+                <div className="p-8 text-center text-muted-foreground">
+                  Loading reports...
+                </div>
               ) : error ? (
                 <div className="p-8 text-center text-red-500">{error}</div>
               ) : (
@@ -277,8 +386,12 @@ export function ChiefReports() {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <CardTitle className="text-base">#{report.id}</CardTitle>
-                          <CardDescription className="text-sm">{report.title}</CardDescription>
+                          <CardTitle className="text-base">
+                            #{report.id}
+                          </CardTitle>
+                          <CardDescription className="text-sm">
+                            {report.title}
+                          </CardDescription>
                         </div>
                         {getPriorityBadge(report.priority)}
                       </div>
@@ -306,7 +419,9 @@ export function ChiefReports() {
                           </Link>
                         </Button>
                         <Button size="sm" variant="outline" asChild>
-                          <Link href={`/dashboard/chief/ai-insights/${report.id}`}>
+                          <Link
+                            href={`/dashboard/chief/ai-insights/${report.id}`}
+                          >
                             <Brain className="h-3 w-3" />
                           </Link>
                         </Button>
@@ -327,5 +442,5 @@ export function ChiefReports() {
         fileName={exportDialog.fileName}
       />
     </div>
-  )
+  );
 }
