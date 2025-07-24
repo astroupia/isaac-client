@@ -1,5 +1,21 @@
 import { apiService } from "./base";
 
+// Helper function to make API calls to local Next.js API routes
+const localApiCall = async (endpoint: string) => {
+  const response = await fetch(`/api${endpoint}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
 export const userService = {
   // Get all users
   getAllUsers: async () => {
@@ -23,7 +39,7 @@ export const userService = {
 
   // Get user by ID
   getUserById: async (id: string) => {
-    return apiService.get(`/users/${id}`);
+    return localApiCall(`/users/${id}`);
   },
 
   // Get user by email
