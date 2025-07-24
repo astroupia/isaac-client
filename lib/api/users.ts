@@ -1,14 +1,30 @@
-import { apiService } from './base';
+import { apiService } from "./base";
+
+// Helper function to make API calls to local Next.js API routes
+const localApiCall = async (endpoint: string) => {
+  const response = await fetch(`/api${endpoint}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
 
 export const userService = {
   // Get all users
   getAllUsers: async () => {
-    return apiService.get('/users');
+    return apiService.get("/users");
   },
 
   // Get all active users
   getActiveUsers: async () => {
-    return apiService.get('/users/active');
+    return apiService.get("/users/active");
   },
 
   // Get users by role
@@ -23,7 +39,7 @@ export const userService = {
 
   // Get user by ID
   getUserById: async (id: string) => {
-    return apiService.get(`/users/${id}`);
+    return localApiCall(`/users/${id}`);
   },
 
   // Get user by email
@@ -35,7 +51,7 @@ export const userService = {
   // Note: This endpoint might not exist in your current API
   // You may need to add POST /users to your NestJS backend
   createUser: async (userData: any) => {
-    return apiService.post('/users', userData);
+    return apiService.post("/users", userData);
   },
 
   // Update user by ID
@@ -50,6 +66,6 @@ export const userService = {
 
   // Get user statistics (for admin dashboard)
   getUserStats: async () => {
-    return apiService.get('/users/stats');
+    return apiService.get("/users/stats");
   },
-}; 
+};

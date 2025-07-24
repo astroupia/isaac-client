@@ -11,11 +11,103 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Brain, FileText, User } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  FileText,
+  User,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { CaseList } from "@/components/case-list";
+import { useInvestigatorDashboard } from "@/hooks/useInvestigatorDashboard";
+import { useInvestigatorAIReports } from "@/hooks/useInvestigatorAIReports";
+import { AIInsightsSection } from "@/components/ai-insights-card";
 
 export function InvestigatorDashboard() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  const {
+    stats,
+    assignedReports,
+    pendingReviews,
+    isLoading,
+    error,
+    refreshData,
+  } = useInvestigatorDashboard(currentUser?._id);
+
+  // Fetch AI reports for the current investigator
+  const {
+    aiReports: investigatorAIReports,
+    isLoading: aiReportsLoading,
+    error: aiReportsError,
+  } = useInvestigatorAIReports(currentUser?._id);
+
+  // Convert to the expected format for AIInsightsSection
+  const aiReports = investigatorAIReports.flatMap(
+    (reportData) => reportData.aiResults
+  );
+
+  if (error) {
+    return (
+      <div className="space-y-6 w-full">
+        <div className="flex flex-col space-y-2 w-full">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Investigator Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Welcome back! Here&apos;s an overview of your assigned cases and
+            AI-generated reports.
+          </p>
+        </div>
+
+        <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <div>
+                <h3 className="font-medium text-red-800 dark:text-red-200">
+                  Error Loading Dashboard
+                </h3>
+                <p className="text-sm text-red-600 dark:text-red-300">
+                  {error}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshData}
+              className="mt-4"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-col space-y-2 w-full">
@@ -37,7 +129,9 @@ export function InvestigatorDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats.assignedCasesCount}
+            </div>
             <p className="text-xs text-muted-foreground">
               Active investigations
             </p>
@@ -52,7 +146,9 @@ export function InvestigatorDashboard() {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats.pendingReviewsCount}
+            </div>
             <p className="text-xs text-muted-foreground">
               Awaiting chief review
             </p>
@@ -65,7 +161,9 @@ export function InvestigatorDashboard() {
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats.aiReportsCount}
+            </div>
             <p className="text-xs text-muted-foreground">AI reports ready</p>
           </CardContent>
         </Card>
@@ -79,10 +177,10 @@ export function InvestigatorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              8
+              {isLoading ? "..." : stats.completedThisMonth}
             </div>
             <p className="text-xs text-green-600/80 dark:text-green-400/80">
-              +3 from last month
+              Reports completed
             </p>
           </CardContent>
         </Card>
@@ -97,7 +195,12 @@ export function InvestigatorDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CaseList />
+            <CaseList
+              incidents={[]}
+              reports={assignedReports}
+              isLoading={isLoading}
+              maxItems={5}
+            />
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full" asChild>
@@ -109,82 +212,7 @@ export function InvestigatorDashboard() {
           </CardFooter>
         </Card>
 
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>AI Insights</CardTitle>
-            <CardDescription>Recent AI-generated analysis</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Incident #2023-045</h4>
-                <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-                  High Confidence
-                </Badge>
-              </div>
-              <Progress value={92} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                AI detected 3 vehicles and 2 pedestrians in the scene
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2"
-                asChild
-              >
-                <Link href="/dashboard/investigator/ai-reports/2023-045">
-                  View Analysis
-                </Link>
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Incident #2023-044</h4>
-                <Badge className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">
-                  Medium Confidence
-                </Badge>
-              </div>
-              <Progress value={68} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                AI identified potential traffic signal malfunction
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2"
-                asChild
-              >
-                <Link href="/dashboard/investigator/ai-reports/2023-044">
-                  View Analysis
-                </Link>
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Incident #2023-043</h4>
-                <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-                  High Confidence
-                </Badge>
-              </div>
-              <Progress value={95} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                AI reconstructed multi-vehicle collision sequence
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2"
-                asChild
-              >
-                <Link href="/dashboard/investigator/ai-reports/2023-043">
-                  View Analysis
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <AIInsightsSection aiReports={aiReports} isLoading={isLoading} />
       </div>
     </div>
   );

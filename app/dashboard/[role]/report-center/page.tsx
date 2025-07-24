@@ -1,5 +1,10 @@
-import { ReportCenter } from "@/components/report-center"
+import { ReportCenter } from "@/components/report-center";
 
-export default function ReportCenterPage({ params }: { params: { role: string } }) {
-  return <ReportCenter role={params.role} />
+export default async function ReportCenterPage({
+  params,
+}: {
+  params: Promise<{ role: string }>;
+}) {
+  const { role } = await params;
+  return <ReportCenter role={role} />;
 }

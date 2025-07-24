@@ -1,6 +1,12 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
 
-const API_BASE_URL = 'https://isaac-api-uilf.onrender.com';
+const API_BASE_URL = "https://isaac-api-uilf.onrender.com";
 
 class ApiService {
   private static instance: ApiService;
@@ -10,7 +16,7 @@ class ApiService {
     this.axiosInstance = axios.create({
       baseURL: API_BASE_URL,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -36,19 +42,45 @@ class ApiService {
   }
 
   public get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.axiosInstance.get<T>(url, config).then((response: AxiosResponse<T>) => response.data);
+    return this.axiosInstance
+      .get<T>(url, config)
+      .then((response: AxiosResponse<T>) => response.data);
   }
 
-  public post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.axiosInstance.post<T>(url, data, config).then((response: AxiosResponse<T>) => response.data);
+  public post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    return this.axiosInstance
+      .post<T>(url, data, config)
+      .then((response: AxiosResponse<T>) => response.data);
   }
 
-  public patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.axiosInstance.patch<T>(url, data, config).then((response: AxiosResponse<T>) => response.data);
+  public patch<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    return this.axiosInstance
+      .patch<T>(url, data, config)
+      .then((response: AxiosResponse<T>) => response.data);
+  }
+
+  public put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    return this.axiosInstance
+      .put<T>(url, data, config)
+      .then((response: AxiosResponse<T>) => response.data);
   }
 
   public delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.axiosInstance.delete<T>(url, config).then((response: AxiosResponse<T>) => response.data);
+    return this.axiosInstance
+      .delete<T>(url, config)
+      .then((response: AxiosResponse<T>) => response.data);
   }
 }
 

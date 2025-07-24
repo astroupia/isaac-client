@@ -1,11 +1,12 @@
-import { AIInsightsDetail } from "@/components/ai-insights-detail"
+import { AIInsightsDetail } from "@/components/ai-insights-detail";
 
 interface PageProps {
-  params: {
-    id: string
-  }
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function TrafficAIInsightsPage({ params }: PageProps) {
-  return <AIInsightsDetail incidentId={params.id} />
+export default async function TrafficAIInsightsPage({ params }: PageProps) {
+  const { id } = await params;
+  return <AIInsightsDetail incidentId={id} />;
 }

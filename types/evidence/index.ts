@@ -1,15 +1,16 @@
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
 export enum EvidenceType {
-  PHOTO = 'photo',
-  VIDEO = 'video',
-  DOCUMENT = 'document',
-  AUDIO = 'audio',
-  WITNESS_STATEMENT = 'witness_statement',
-  OTHER = 'other',
+  PHOTO = "photo",
+  VIDEO = "video",
+  DOCUMENT = "document",
+  AUDIO = "audio",
+  WITNESS_STATEMENT = "witness_statement",
+  OTHER = "other",
 }
 
 export interface IEvidence {
+  _id: Types.ObjectId;
   title: string;
   description?: string;
   type: EvidenceType;
