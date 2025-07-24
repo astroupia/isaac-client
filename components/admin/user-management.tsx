@@ -50,6 +50,7 @@ import { UserForm } from "./user-form";
 import { UserDetails } from "./user-details";
 import type { User, UserRole } from "@/lib/models";
 import { userService } from "@/lib/api/users";
+import bcrypt from "bcryptjs";
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -94,7 +95,11 @@ export function UserManagement() {
 
   const handleCreateUser = async (userData: Partial<User>) => {
     try {
-      const created = await userService.createUser(userData) as User;
+      let dataToSend = { ...userData };
+      if ((userData as any).password) {
+        (dataToSend as any).password = await bcrypt.hash((userData as any).password, 10);
+      }
+      const created = await userService.createUser(dataToSend) as User;
       setUsers((prev) => [...prev, created]);
       setIsCreateDialogOpen(false);
     } catch {

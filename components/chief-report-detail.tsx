@@ -374,14 +374,7 @@ export function ChiefReportDetail({ reportId }: ChiefReportDetailProps) {
         </div>
         <div className="flex items-center space-x-2">
           {getStatusBadge(report.status)}
-          <Button variant="outline" size="sm">
-            <Print className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+          {/* Print and Share buttons removed as requested */}
         </div>
       </div>
 
