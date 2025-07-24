@@ -45,6 +45,7 @@ import {
 import { reportService } from "@/lib/api/reports";
 import { ReportStatus, ReportPriority } from "@/types/report";
 
+
 export function TrafficReports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");

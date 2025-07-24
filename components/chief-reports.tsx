@@ -263,13 +263,6 @@ export function ChiefReports() {
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => handleExport("All Reports")}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export All
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -356,14 +349,6 @@ export function ChiefReports() {
                           Review
                         </Link>
                       </Button>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link
-                          href={`/dashboard/chief/ai-insights/${report.id}`}
-                        >
-                          <Brain className="mr-2 h-4 w-4" />
-                          AI Analysis
-                        </Link>
-                      </Button>
                     </div>
                   </div>
                 ))
@@ -416,13 +401,6 @@ export function ChiefReports() {
                           <Link href={`/dashboard/chief/reports/${report.id}`}>
                             <Eye className="mr-1 h-3 w-3" />
                             Review
-                          </Link>
-                        </Button>
-                        <Button size="sm" variant="outline" asChild>
-                          <Link
-                            href={`/dashboard/chief/ai-insights/${report.id}`}
-                          >
-                            <Brain className="h-3 w-3" />
                           </Link>
                         </Button>
                       </div>
