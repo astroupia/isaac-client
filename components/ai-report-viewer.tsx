@@ -342,13 +342,22 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
 
     setIsEnhancing(true);
     try {
-      console.log("🔍 Enhancing report with custom prompt:", enhancePrompt);
+      console.log(
+        "🔍 [AI Report Viewer] Enhancing report with custom prompt:",
+        enhancePrompt
+      );
+      console.log("🔍 [AI Report Viewer] Report ID:", id);
 
       const enhancedResult = await enhanceReport(id, enhancePrompt);
-      console.log("✅ Report enhanced successfully:", enhancedResult);
+      console.log(
+        "✅ [AI Report Viewer] Report enhanced successfully:",
+        enhancedResult
+      );
 
       // Refresh the AI results
+      console.log("🔄 [AI Report Viewer] Refreshing AI results...");
       const updatedResults = await getReportResults(id);
+      console.log("✅ [AI Report Viewer] Updated AI results:", updatedResults);
       setAiResults(updatedResults);
 
       // Clear the prompt
@@ -359,7 +368,7 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
         description: "The report has been enhanced with your custom prompt.",
       });
     } catch (error: any) {
-      console.error("❌ Error enhancing report:", error);
+      console.error("❌ [AI Report Viewer] Error enhancing report:", error);
       toast({
         title: "Enhancement Failed",
         description: error.message || "Failed to enhance the report.",
