@@ -1,11 +1,12 @@
-import { ChiefAIInsights } from "@/components/chief-ai-insights"
+import { ChiefAIInsights } from "@/components/chief-ai-insights";
 
 interface PageProps {
-  params: {
-    id: string
-  }
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function ChiefAIInsightsPage({ params }: PageProps) {
-  return <ChiefAIInsights reportId={params.id} />
+export default async function ChiefAIInsightsPage({ params }: PageProps) {
+  const { id } = await params;
+  return <ChiefAIInsights reportId={id} />;
 }

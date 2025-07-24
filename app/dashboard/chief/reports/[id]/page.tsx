@@ -1,11 +1,12 @@
-import { ChiefReportDetail } from "@/components/chief-report-detail"
+import { ChiefReportDetail } from "@/components/chief-report-detail";
 
 interface PageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
-export default function ChiefReportDetailPage({ params }: PageProps) {
-  return <ChiefReportDetail reportId={params.id} />
+export default async function ChiefReportDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  return <ChiefReportDetail reportId={id} />;
 }
