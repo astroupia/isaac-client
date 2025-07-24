@@ -55,6 +55,25 @@ export function InvestigatorDashboard() {
     refreshData,
   } = useInvestigatorDashboard(currentUser?._id);
 
+  // Debug logging
+  useEffect(() => {
+    if (currentUser?._id) {
+      console.log(
+        "🔍 [Investigator Dashboard] Current user ID:",
+        currentUser._id
+      );
+      console.log(
+        "🔍 [Investigator Dashboard] Assigned reports count:",
+        assignedReports.length
+      );
+      console.log(
+        "🔍 [Investigator Dashboard] Pending reviews count:",
+        pendingReviews.length
+      );
+      console.log("🔍 [Investigator Dashboard] Stats:", stats);
+    }
+  }, [currentUser?._id, assignedReports.length, pendingReviews.length, stats]);
+
   // Fetch AI reports for the current investigator
   const {
     aiReports: investigatorAIReports,
@@ -191,7 +210,8 @@ export function InvestigatorDashboard() {
           <CardHeader>
             <CardTitle>Assigned Cases</CardTitle>
             <CardDescription>
-              Your current case load and priorities
+              Your current case load and priorities ({assignedReports.length}{" "}
+              assigned)
             </CardDescription>
           </CardHeader>
           <CardContent>
