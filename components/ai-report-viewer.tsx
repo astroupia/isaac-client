@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,8 +26,21 @@ import {
   MessageSquare,
   ThumbsDown,
   ThumbsUp,
+  Loader2,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  getReportResults,
+  startConversation,
+  sendMessage,
+  getReportConversations,
+  enhanceReport,
+} from "@/lib/api/aiProcessing";
+import { IAiAnalysisResult, IAiConversation } from "@/types/ai_processing";
+import { AiAnalysisDisplay } from "./ai-analysis-display";
+import { AiChatMessage } from "./ai-chat-message";
+import { PDFGenerator, PDFReportData } from "@/lib/pdf-generator";
 
 interface AIReportViewerProps {
   id: string;
@@ -36,20 +49,436 @@ interface AIReportViewerProps {
 export function AIReportViewer({ id }: AIReportViewerProps) {
   const { toast } = useToast();
   const [feedback, setFeedback] = useState("");
+  const [aiResults, setAiResults] = useState<IAiAnalysisResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<IAiConversation | null>(
+    null
+  );
+  const [message, setMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [enhancePrompt, setEnhancePrompt] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
+  // Predefined enhancement prompts
+  const predefinedPrompts = {
+    vehicleDamage:
+      "Focus specifically on vehicle damage assessment and provide detailed cost estimates for repairs.",
+    weatherImpact:
+      "Analyze the impact of weather conditions on the accident and how it affected vehicle handling.",
+    casualtyAssessment:
+      "Provide detailed casualty assessment including injury severity and medical implications.",
+    sceneReconstruction:
+      "Reconstruct the sequence of events leading to the accident with timeline analysis.",
+    trafficFlow:
+      "Analyze the traffic flow and road conditions at the time of the incident.",
+    humanFactors:
+      "Assess the role of human factors in this incident including driver behavior and decision making.",
+  };
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Fetch current user on component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        setUserLoading(true);
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const userData = await response.json();
+          console.log("🔍 Current User Data:", userData);
+          setCurrentUser(userData);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch AI analysis results on component mount
+  useEffect(() => {
+    const fetchAIResults = async () => {
+      try {
+        setLoading(true);
+        console.log("🔍 Fetching AI analysis results for report:", id);
+        const results = await getReportResults(id);
+        console.log("✅ AI analysis results fetched:", results);
+        setAiResults(results);
+      } catch (error: any) {
+        console.error("❌ Failed to fetch AI analysis results:", error);
+        setError(error.message || "Failed to load AI analysis results");
+        toast({
+          title: "Error Loading Results",
+          description: "Failed to load the AI analysis results.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAIResults();
+  }, [id, toast]);
+
+  // Start AI conversation
+  const handleStartConversation = async () => {
+    if (!conversation && currentUser?._id) {
+      setConversationLoading(true);
+      try {
+        console.log("🔍 Starting AI conversation for report:", id);
+        const newConversation = await startConversation(currentUser._id, {
+          reportId: id,
+          title: `AI Analysis Discussion - Report ${id}`,
+          initialMessage:
+            "What are the key findings from the AI analysis of this incident?",
+        });
+        console.log("✅ AI conversation started:", newConversation);
+
+        // Handle the nested API response structure
+        let conversationData: any;
+        if (newConversation && typeof newConversation === "object") {
+          if ("success" in newConversation && "data" in newConversation) {
+            // API returned { success: true, data: {...}, message: "..." }
+            conversationData = (newConversation as any).data;
+            console.log(
+              "📊 Extracted conversation data from nested response:",
+              conversationData
+            );
+          } else {
+            // API returned conversation directly
+            conversationData = newConversation;
+          }
+        }
+
+        if (!conversationData) {
+          throw new Error("Invalid conversation response structure");
+        }
+
+        // Ensure the conversation has the expected structure
+        const conversationWithDefaults: IAiConversation = {
+          ...conversationData,
+          messages: conversationData.messages || [],
+        };
+        setConversation(conversationWithDefaults);
+        toast({
+          title: "AI Conversation Started",
+          description:
+            "You can now ask follow-up questions about the analysis.",
+        });
+      } catch (error: any) {
+        console.error("❌ Failed to start AI conversation:", error);
+        toast({
+          title: "Conversation Failed",
+          description: error.message || "Failed to start AI conversation",
+          variant: "destructive",
+        });
+      } finally {
+        setConversationLoading(false);
+      }
+    }
+  };
+
+  // Send message in conversation
+  const handleSendMessage = async () => {
+    if (!message.trim() || !conversation || !currentUser?._id) return;
+
+    setSendingMessage(true);
+    try {
+      console.log("🔍 Sending message in conversation:", message);
+      // Use the conversation ID from the conversation object
+      const conversationId =
+        (conversation as any)._id ||
+        (conversation as any).id ||
+        conversation.reportId?.toString();
+
+      console.log("🔍 Conversation object:", conversation);
+      console.log("🔍 Extracted conversation ID:", conversationId);
+
+      if (!conversationId) {
+        throw new Error("No conversation ID available");
+      }
+
+      const response = await sendMessage(conversationId, currentUser._id, {
+        message: message.trim(),
+      });
+      console.log("✅ Message sent successfully:", response);
+
+      // Handle nested response structure for sendMessage
+      let messageResponse: any;
+      if (response && typeof response === "object") {
+        if ("success" in response && "data" in response) {
+          messageResponse = (response as any).data;
+        } else {
+          messageResponse = response;
+        }
+      }
+
+      console.log("📊 Message response data:", messageResponse);
+
+      // Update conversation with new messages
+      setConversation((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          messages: [
+            ...(prev.messages || []),
+            messageResponse?.userMessage,
+            messageResponse?.aiResponse,
+          ].filter(Boolean), // Remove any undefined messages
+        };
+      });
+
+      setMessage("");
+      toast({
+        title: "Message Sent",
+        description: "Your question has been sent to the AI assistant.",
+      });
+    } catch (error: any) {
+      console.error("❌ Failed to send message:", error);
+      toast({
+        title: "Message Failed",
+        description: error.message || "Failed to send message",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<
+    "positive" | "negative" | null
+  >(null);
 
   const handleFeedback = (type: "positive" | "negative") => {
+    setFeedbackSubmitted(type);
     toast({
       title: "Feedback submitted",
-      description: `Thank you for your ${type} feedback on this AI report.`,
+      description: `Thank you for your ${type} feedback on this AI analysis.`,
     });
   };
 
-  const handleNotifyChief = () => {
-    toast({
-      title: "Chief Analyst notified",
-      description: "Your message has been sent to the Chief Analyst.",
-    });
+  const handleDownloadReport = async () => {
+    try {
+      // Prepare PDF data - convert ObjectId types to strings
+      const pdfData: PDFReportData = {
+        reportId: id,
+        title: `AI Analysis Report #${id}`,
+        generatedAt: new Date(),
+        aiResults: aiResults.map((result) => ({
+          ...result,
+          evidenceId: result.evidenceId?.toString(),
+          reportId: result.reportId?.toString(),
+          incidentId: result.incidentId?.toString(),
+          createdAt: result.createdAt
+            ? typeof result.createdAt === "string"
+              ? result.createdAt
+              : result.createdAt instanceof Date
+              ? result.createdAt.toISOString()
+              : new Date(result.createdAt).toISOString()
+            : new Date().toISOString(),
+          updatedAt: result.updatedAt
+            ? typeof result.updatedAt === "string"
+              ? result.updatedAt
+              : result.updatedAt instanceof Date
+              ? result.updatedAt.toISOString()
+              : new Date(result.updatedAt).toISOString()
+            : new Date().toISOString(),
+        })),
+        processingSummary: {
+          totalEvidence: aiResults.length,
+          successfullyProcessed: aiResults.length,
+          overallConfidence:
+            aiResults.length > 0
+              ? aiResults.reduce(
+                  (sum, result) => sum + (result.confidenceScore || 0),
+                  0
+                ) / aiResults.length
+              : 0,
+        },
+      };
+
+      // Show loading toast
+      toast({
+        title: "Generating PDF Report",
+        description: "Please wait while we prepare your report...",
+      });
+
+      // Generate and download PDF
+      await PDFGenerator.downloadPDF(pdfData);
+
+      // Success toast
+      toast({
+        title: "AI Analysis Report Downloaded",
+        description:
+          "Your AI analysis report has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      console.error("Error downloading report:", error);
+      toast({
+        title: "Download Failed",
+        description:
+          error.message || "Failed to download the report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleEnhanceReport = async () => {
+    if (!enhancePrompt.trim()) {
+      toast({
+        title: "Enhancement Prompt Required",
+        description: "Please enter a custom prompt for the enhancement.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEnhancing(true);
+    try {
+      console.log("🔍 Enhancing report with custom prompt:", enhancePrompt);
+
+      const enhancedResult = await enhanceReport(id, enhancePrompt);
+      console.log("✅ Report enhanced successfully:", enhancedResult);
+
+      // Refresh the AI results
+      const updatedResults = await getReportResults(id);
+      setAiResults(updatedResults);
+
+      // Clear the prompt
+      setEnhancePrompt("");
+
+      toast({
+        title: "Report Enhanced",
+        description: "The report has been enhanced with your custom prompt.",
+      });
+    } catch (error: any) {
+      console.error("❌ Error enhancing report:", error);
+      toast({
+        title: "Enhancement Failed",
+        description: error.message || "Failed to enhance the report.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const quickEnhance = async (promptType: keyof typeof predefinedPrompts) => {
+    setIsEnhancing(true);
+    try {
+      const prompt = predefinedPrompts[promptType];
+      console.log("🔍 Quick enhancing report with prompt type:", promptType);
+      console.log("📝 Using prompt:", prompt);
+
+      const enhancedResult = await enhanceReport(id, prompt);
+      console.log("✅ Quick enhancement completed:", enhancedResult);
+
+      // Refresh the AI results
+      const updatedResults = await getReportResults(id);
+      setAiResults(updatedResults);
+
+      toast({
+        title: "Quick Enhancement Completed",
+        description: `Report enhanced with ${promptType
+          .replace(/([A-Z])/g, " $1")
+          .toLowerCase()} analysis.`,
+      });
+    } catch (error: any) {
+      console.error("❌ Quick enhancement failed:", error);
+      toast({
+        title: "Quick Enhancement Failed",
+        description: error.message || "Failed to enhance the report.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const batchEnhance = async (prompts: string[]) => {
+    setIsEnhancing(true);
+    const results = [];
+
+    try {
+      for (const prompt of prompts) {
+        try {
+          console.log("🔍 Batch enhancing with prompt:", prompt);
+          const result = await enhanceReport(id, prompt);
+          results.push({ prompt, success: true, result });
+          console.log("✅ Batch enhancement success for prompt:", prompt);
+        } catch (error) {
+          console.error(
+            "❌ Batch enhancement failed for prompt:",
+            prompt,
+            error
+          );
+          results.push({ prompt, success: false, error });
+        }
+      }
+
+      // Refresh the AI results after batch enhancement
+      const updatedResults = await getReportResults(id);
+      setAiResults(updatedResults);
+
+      const successCount = results.filter((r) => r.success).length;
+      const failureCount = results.filter((r) => !r.success).length;
+
+      toast({
+        title: "Batch Enhancement Completed",
+        description: `Successfully enhanced ${successCount} out of ${
+          prompts.length
+        } prompts.${failureCount > 0 ? ` ${failureCount} failed.` : ""}`,
+        variant: failureCount > 0 ? "destructive" : "default",
+      });
+
+      console.log("📊 Batch enhancement results:", results);
+      return results;
+    } catch (error: any) {
+      console.error("❌ Batch enhancement failed:", error);
+      toast({
+        title: "Batch Enhancement Failed",
+        description: error.message || "Failed to complete batch enhancement.",
+        variant: "destructive",
+      });
+      return results;
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <span className="ml-4 text-muted-foreground">
+          Loading AI analysis results...
+        </span>
+      </div>
+    );
+  }
+
+  if (error || !aiResults) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <p className="text-red-600 font-medium mb-4">
+          {error || "AI analysis results not found."}
+        </p>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/investigator/cases">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Cases
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -64,13 +493,17 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
 
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2">
-          <h1 className="text-3xl font-bold tracking-tight">AI Report #{id}</h1>
-          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-            High Confidence
+          <h1 className="text-3xl font-bold tracking-tight">
+            AI Analysis Report #{id}
+          </h1>
+          <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20">
+            {aiResults.length > 0
+              ? `${aiResults.length} Analysis Results`
+              : "No Results"}
           </Badge>
         </div>
         <p className="text-muted-foreground">
-          Vehicle Collision - Highway 101 • Generated on April 24, 2025
+          AI-powered analysis of incident evidence and findings
         </p>
       </div>
 
@@ -80,429 +513,278 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
             <CardHeader>
               <CardTitle>AI Analysis Results</CardTitle>
               <CardDescription>
-                Comprehensive analysis of incident #{id}
+                Comprehensive AI analysis of incident #{id}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="summary">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="summary">Summary</TabsTrigger>
-                  <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-                  <TabsTrigger value="environment">Environment</TabsTrigger>
-                  <TabsTrigger value="casualties">Casualties</TabsTrigger>
+              <Tabs defaultValue="analysis">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="analysis">Analysis Results</TabsTrigger>
+                  <TabsTrigger value="conversation">
+                    AI Conversation
+                  </TabsTrigger>
+                  <TabsTrigger value="enhance">Enhance Report</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="summary" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Incident Overview</h3>
-                    <p className="text-sm">
-                      The AI system has analyzed all available evidence for
-                      incident #{id} and determined with high confidence (92%)
-                      that this was a multi-vehicle collision involving 3
-                      vehicles on Highway 101. The incident occurred at
-                      approximately 10:30 AM on April 24, 2025, during clear
-                      weather conditions with dry road surfaces.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Key Findings</h3>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>
-                        Primary cause: Unsafe lane change by Vehicle 1 (red
-                        sedan)
-                      </li>
-                      <li>
-                        Contributing factors: Excessive speed by Vehicle 2 (blue
-                        SUV)
-                      </li>
-                      <li>
-                        Environmental factors: Sun glare reported by witnesses
-                      </li>
-                      <li>Casualties: 2 minor injuries, no fatalities</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Incident Timeline</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-start space-x-2">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-primary">
-                            1
-                          </span>
-                        </div>
-                        <p>
-                          10:28 AM - Vehicle 1 (red sedan) attempts to change
-                          lanes without proper signaling
+                <TabsContent value="analysis" className="space-y-4 mt-4">
+                  <div className="space-y-4">
+                    {(!aiResults || aiResults.length === 0) && (
+                      <div className="text-center py-8">
+                        <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground text-lg">
+                          No AI analysis results found for this report.
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Start an AI analysis to get detailed insights about
+                          this case.
                         </p>
                       </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-primary">
-                            2
-                          </span>
-                        </div>
-                        <p>
-                          10:29 AM - Vehicle 2 (blue SUV) traveling at
-                          approximately 75 mph in a 65 mph zone
-                        </p>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-primary">
-                            3
-                          </span>
-                        </div>
-                        <p>
-                          10:30 AM - Vehicle 1 collides with Vehicle 2, causing
-                          both to lose control
-                        </p>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-primary">
-                            4
-                          </span>
-                        </div>
-                        <p>
-                          10:30 AM - Vehicle 3 (white pickup) unable to stop in
-                          time, collides with Vehicle 2
-                        </p>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-primary">
-                            5
-                          </span>
-                        </div>
-                        <p>
-                          10:31 AM - All vehicles come to a stop, blocking two
-                          lanes of traffic
-                        </p>
-                      </div>
-                    </div>
+                    )}
+                    {Array.isArray(aiResults) &&
+                      aiResults.map((result, index) => (
+                        <AiAnalysisDisplay
+                          key={result.evidenceId?.toString() || index}
+                          result={result}
+                        />
+                      ))}
                   </div>
                 </TabsContent>
 
-                <TabsContent value="vehicles" className="space-y-4 mt-4">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Vehicle 1</CardTitle>
-                        <CardDescription>Red Sedan</CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-2">
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <Car className="h-12 w-12 text-muted-foreground" />
+                <TabsContent value="conversation" className="space-y-4 mt-4">
+                  <div className="space-y-4">
+                    {!conversation ? (
+                      <div className="text-center py-8">
+                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground text-lg">
+                          Start a conversation with AI about this analysis
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Ask follow-up questions and get detailed explanations
+                        </p>
+                        <Button
+                          onClick={handleStartConversation}
+                          disabled={conversationLoading || !currentUser?._id}
+                          className="mt-4"
+                        >
+                          {conversationLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Brain className="mr-2 h-4 w-4" />
+                          )}
+                          {conversationLoading
+                            ? "Starting..."
+                            : !currentUser?._id
+                            ? "Loading User..."
+                            : "Start AI Conversation"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-4 max-h-96 overflow-y-auto">
+                          {(conversation.messages || [])
+                            .filter((msg) => msg.role !== "system")
+                            .map((msg, index) => (
+                              <AiChatMessage key={index} message={msg} />
+                            ))}
                         </div>
-                        <div className="space-y-1 text-sm">
-                          <p>
-                            <span className="font-medium">Make/Model:</span>{" "}
-                            Toyota Camry
-                          </p>
-                          <p>
-                            <span className="font-medium">Year:</span> 2022
-                          </p>
-                          <p>
-                            <span className="font-medium">Damage:</span>{" "}
-                            Front-end, moderate
-                          </p>
-                          <p>
-                            <span className="font-medium">Occupants:</span> 1
-                            driver (minor injuries)
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
 
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Vehicle 2</CardTitle>
-                        <CardDescription>Blue SUV</CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-2">
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <Car className="h-12 w-12 text-muted-foreground" />
+                        {/* Suggested prompts */}
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Suggested questions:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              "What are the key findings from this analysis?",
+                              "Can you explain the damage patterns?",
+                              "What environmental factors contributed to this incident?",
+                              "What recommendations do you have for prevention?",
+                              "How confident is the AI in these results?",
+                              "What additional evidence would improve the analysis?",
+                            ].map((prompt, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setMessage(prompt)}
+                                className="text-xs"
+                              >
+                                {prompt}
+                              </Button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="space-y-1 text-sm">
-                          <p>
-                            <span className="font-medium">Make/Model:</span>{" "}
-                            Honda CR-V
-                          </p>
-                          <p>
-                            <span className="font-medium">Year:</span> 2020
-                          </p>
-                          <p>
-                            <span className="font-medium">Damage:</span> Side
-                            and rear, severe
-                          </p>
-                          <p>
-                            <span className="font-medium">Occupants:</span> 2 (1
-                            with minor injuries)
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
 
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Vehicle 3</CardTitle>
-                        <CardDescription>White Pickup</CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-2">
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <Car className="h-12 w-12 text-muted-foreground" />
+                        <div className="flex space-x-2">
+                          <Textarea
+                            placeholder="Ask a follow-up question about the analysis..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            onKeyPress={(e) =>
+                              e.key === "Enter" &&
+                              !e.shiftKey &&
+                              handleSendMessage()
+                            }
+                            className="flex-1"
+                            rows={2}
+                          />
+                          <Button
+                            onClick={handleSendMessage}
+                            disabled={
+                              !message.trim() ||
+                              sendingMessage ||
+                              !currentUser?._id
+                            }
+                            size="sm"
+                          >
+                            {sendingMessage ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
-                        <div className="space-y-1 text-sm">
-                          <p>
-                            <span className="font-medium">Make/Model:</span>{" "}
-                            Ford F-150
-                          </p>
-                          <p>
-                            <span className="font-medium">Year:</span> 2021
-                          </p>
-                          <p>
-                            <span className="font-medium">Damage:</span> Front
-                            bumper, minor
-                          </p>
-                          <p>
-                            <span className="font-medium">Occupants:</span> 1
-                            driver (no injuries)
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    )}
                   </div>
+                </TabsContent>
 
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">
-                      Vehicle Trajectory Analysis
-                    </h3>
-                    <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">
-                        Vehicle trajectory visualization would appear here
+                <TabsContent value="enhance" className="space-y-4 mt-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="enhance-prompt"
+                        className="text-sm font-medium"
+                      >
+                        Custom Enhancement Prompt
+                      </label>
+                      <Textarea
+                        id="enhance-prompt"
+                        placeholder="Enter a custom prompt to enhance the AI analysis. For example: 'Focus specifically on vehicle damage assessment and provide detailed cost estimates for repairs.'"
+                        value={enhancePrompt}
+                        onChange={(e) => setEnhancePrompt(e.target.value)}
+                        className="min-h-[120px]"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Provide specific instructions to enhance the existing AI
+                        analysis with new insights or focus areas.
                       </p>
                     </div>
-                    <p className="text-sm">
-                      The AI system has reconstructed the vehicle trajectories
-                      based on physical evidence, witness statements, and
-                      traffic camera footage. The analysis shows that Vehicle 1
-                      initiated an unsafe lane change that directly led to the
-                      collision sequence.
-                    </p>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="environment" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">
-                      Environmental Conditions
-                    </h3>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Card>
-                        <CardContent className="p-4 space-y-2">
-                          <h4 className="font-medium">Weather Conditions</h4>
-                          <div className="space-y-1 text-sm">
-                            <p>
-                              <span className="font-medium">Sky:</span> Clear
-                            </p>
-                            <p>
-                              <span className="font-medium">Temperature:</span>{" "}
-                              72°F / 22°C
-                            </p>
-                            <p>
-                              <span className="font-medium">Visibility:</span>{" "}
-                              Good (10+ miles)
-                            </p>
-                            <p>
-                              <span className="font-medium">Wind:</span> Light
-                              (5-10 mph)
-                            </p>
-                            <p>
-                              <span className="font-medium">
-                                Precipitation:
-                              </span>{" "}
-                              None
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardContent className="p-4 space-y-2">
-                          <h4 className="font-medium">Road Conditions</h4>
-                          <div className="space-y-1 text-sm">
-                            <p>
-                              <span className="font-medium">Surface:</span> Dry
-                              asphalt
-                            </p>
-                            <p>
-                              <span className="font-medium">Lanes:</span> 4
-                              lanes (2 each direction)
-                            </p>
-                            <p>
-                              <span className="font-medium">Traffic:</span>{" "}
-                              Moderate
-                            </p>
-                            <p>
-                              <span className="font-medium">Speed Limit:</span>{" "}
-                              65 mph
-                            </p>
-                            <p>
-                              <span className="font-medium">Road Quality:</span>{" "}
-                              Good condition
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">
+                        Quick Enhancement Options:
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(predefinedPrompts).map(
+                          ([key, prompt]) => (
+                            <Button
+                              key={key}
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                quickEnhance(
+                                  key as keyof typeof predefinedPrompts
+                                )
+                              }
+                              disabled={isEnhancing}
+                              className="text-xs h-auto p-2 text-left"
+                            >
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium capitalize">
+                                  {key.replace(/([A-Z])/g, " $1").trim()}
+                                </span>
+                                <span className="text-xs text-muted-foreground mt-1">
+                                  {prompt.length > 60
+                                    ? prompt.substring(0, 60) + "..."
+                                    : prompt}
+                                </span>
+                              </div>
+                            </Button>
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">
-                      Environmental Factors
-                    </h3>
-                    <p className="text-sm">
-                      The AI analysis identified several environmental factors
-                      that may have contributed to the incident: 1. Sun glare:
-                      The incident occurred in the morning with the sun at a low
-                      angle in the east, potentially causing glare for eastbound
-                      drivers. 2. High traffic volume: Moderate to heavy traffic
-                      was present at the time of the incident, reducing reaction
-                      time for drivers. 3. Merging lane: The collision occurred
-                      near a merging lane, which often requires additional
-                      driver attention. 4. Road curvature: A slight curve in the
-                      road may have limited visibility for Vehicle 3.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Location Analysis</h3>
-                    <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">
-                        Map visualization would appear here
-                      </p>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">
+                        Or Use Custom Prompt:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "Focus specifically on vehicle damage assessment and provide detailed cost estimates for repairs.",
+                          "Analyze the environmental conditions and their impact on the incident.",
+                          "Provide detailed recommendations for preventing similar incidents.",
+                          "Assess the role of human factors in this incident.",
+                          "Analyze the traffic flow and road conditions at the time of the incident.",
+                          "Provide a detailed timeline reconstruction of the events.",
+                        ].map((prompt, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEnhancePrompt(prompt)}
+                            disabled={isEnhancing}
+                            className="text-xs"
+                          >
+                            {prompt.length > 40
+                              ? prompt.substring(0, 40) + "..."
+                              : prompt}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                    <p className="text-sm">
-                      The incident occurred at mile marker 42 on Highway 101, a
-                      section known for previous incidents. The AI system has
-                      identified this as a potential hotspot for traffic
-                      incidents, with 3 similar collisions reported in the past
-                      12 months.
-                    </p>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="casualties" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Casualty Assessment</h3>
-                    <p className="text-sm">
-                      The AI system has analyzed medical reports and on-scene
-                      assessments to provide the following casualty information:
-                    </p>
-                  </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleEnhanceReport}
+                        disabled={!enhancePrompt.trim() || isEnhancing}
+                        className="flex-1"
+                      >
+                        {isEnhancing ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Brain className="mr-2 h-4 w-4" />
+                        )}
+                        {isEnhancing
+                          ? "Enhancing Report..."
+                          : "Enhance with Custom Prompt"}
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          batchEnhance(Object.values(predefinedPrompts))
+                        }
+                        disabled={isEnhancing}
+                        variant="outline"
+                        className="flex-shrink-0"
+                      >
+                        {isEnhancing ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Brain className="mr-2 h-4 w-4" />
+                        )}
+                        {isEnhancing ? "Enhancing..." : "Batch Enhance"}
+                      </Button>
+                    </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Casualty 1</CardTitle>
-                        <CardDescription>Driver of Vehicle 1</CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-2">
-                        <div className="space-y-1 text-sm">
-                          <p>
-                            <span className="font-medium">
-                              Injury Severity:
-                            </span>{" "}
-                            Minor
-                          </p>
-                          <p>
-                            <span className="font-medium">Type:</span>{" "}
-                            Contusions, minor lacerations
-                          </p>
-                          <p>
-                            <span className="font-medium">Treatment:</span>{" "}
-                            On-scene first aid, no hospitalization
-                          </p>
-                          <p>
-                            <span className="font-medium">
-                              Airbag Deployed:
-                            </span>{" "}
-                            Yes
-                          </p>
-                          <p>
-                            <span className="font-medium">Seatbelt Used:</span>{" "}
-                            Yes
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-base">Casualty 2</CardTitle>
-                        <CardDescription>
-                          Passenger of Vehicle 2
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-2">
-                        <div className="space-y-1 text-sm">
-                          <p>
-                            <span className="font-medium">
-                              Injury Severity:
-                            </span>{" "}
-                            Minor
-                          </p>
-                          <p>
-                            <span className="font-medium">Type:</span> Whiplash,
-                            shoulder strain
-                          </p>
-                          <p>
-                            <span className="font-medium">Treatment:</span>{" "}
-                            Transported to hospital, released same day
-                          </p>
-                          <p>
-                            <span className="font-medium">
-                              Airbag Deployed:
-                            </span>{" "}
-                            Yes (side)
-                          </p>
-                          <p>
-                            <span className="font-medium">Seatbelt Used:</span>{" "}
-                            Yes
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-medium">
-                      Safety System Analysis
-                    </h3>
-                    <p className="text-sm">
-                      The AI system has analyzed the effectiveness of vehicle
-                      safety systems in this incident:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>
-                        All airbags deployed as designed, significantly reducing
-                        injury severity
-                      </li>
-                      <li>
-                        Seatbelt use by all occupants was a critical factor in
-                        minimizing injuries
-                      </li>
-                      <li>
-                        Vehicle 2&apos;s automatic emergency braking system
-                        activated but had insufficient time to prevent collision
-                      </li>
-                      <li>
-                        Vehicle 1&apos;s lane departure warning system did not
-                        activate prior to the lane change (driver override)
-                      </li>
-                    </ul>
+                    <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                        How Enhancement Works:
+                      </h4>
+                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                        <li>
+                          • Updates existing analysis results with your custom
+                          prompt
+                        </li>
+                        <li>
+                          • Re-analyzes evidence using the new focus areas
+                        </li>
+                        <li>
+                          • Generates enhanced insights and recommendations
+                        </li>
+                        <li>• Maintains all previous analysis data</li>
+                      </ul>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -510,104 +792,47 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
             <CardFooter className="flex justify-between border-t p-4">
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="outline"
+                  variant={
+                    feedbackSubmitted === "positive" ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => handleFeedback("positive")}
+                  disabled={feedbackSubmitted !== null}
+                  className={
+                    feedbackSubmitted === "positive"
+                      ? "bg-green-500 hover:bg-green-600"
+                      : ""
+                  }
                 >
                   <ThumbsUp className="mr-2 h-4 w-4" />
-                  Helpful
+                  {feedbackSubmitted === "positive" ? "Thank you!" : "Helpful"}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant={
+                    feedbackSubmitted === "negative" ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => handleFeedback("negative")}
+                  disabled={feedbackSubmitted !== null}
+                  className={
+                    feedbackSubmitted === "negative"
+                      ? "bg-red-500 hover:bg-red-600"
+                      : ""
+                  }
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
-                  Not Helpful
+                  {feedbackSubmitted === "negative" ? "Noted" : "Not Helpful"}
                 </Button>
               </div>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadReport}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download Report
               </Button>
             </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Evidence Analysis</CardTitle>
-              <CardDescription>
-                AI processing of submitted evidence
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Photo evidence 1
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Dashboard camera from Vehicle 3
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Photo evidence 2
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Traffic camera footage
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">
-                      Photo evidence 3
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Post-incident scene photo
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">AI Evidence Processing</h3>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Vehicle Detection</p>
-                      <span className="text-sm">94%</span>
-                    </div>
-                    <Progress value={94} className="h-2" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Damage Assessment</p>
-                      <span className="text-sm">87%</span>
-                    </div>
-                    <Progress value={87} className="h-2" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Trajectory Reconstruction</p>
-                      <span className="text-sm">92%</span>
-                    </div>
-                    <Progress value={92} className="h-2" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Overall Confidence</p>
-                      <span className="text-sm">92%</span>
-                    </div>
-                    <Progress value={92} className="h-2" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
           </Card>
         </div>
 
@@ -624,85 +849,81 @@ export function AIReportViewer({ id }: AIReportViewerProps) {
                   View Full Case
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Brain className="mr-2 h-4 w-4" />
-                Ask AI Follow-up Questions
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleStartConversation}
+                disabled={conversationLoading || !!conversation}
+              >
+                {conversationLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Brain className="mr-2 h-4 w-4" />
+                )}
+                {conversationLoading
+                  ? "Starting..."
+                  : conversation
+                  ? "Conversation Active"
+                  : "Ask AI Follow-up Questions"}
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleDownloadReport}
+              >
                 <Download className="mr-2 h-4 w-4" />
-                Download Report
+                Download AI Analysis Report
               </Button>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Notify Chief Analyst</h3>
-                <Textarea
-                  placeholder="Add a message for the Chief Analyst..."
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                />
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleNotifyChief}
-                  disabled={!feedback.trim()}
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Send Message
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>AI Report Metadata</CardTitle>
-              <CardDescription>
-                Technical information about this report
-              </CardDescription>
+              <CardTitle>Analysis Summary</CardTitle>
+              <CardDescription>Overview of AI analysis results</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <p className="text-sm text-muted-foreground">Report ID</p>
-                  <p className="text-sm font-medium">AI-{id}-2025</p>
+                  <p className="text-sm text-muted-foreground">Total Results</p>
+                  <p className="text-sm font-medium">{aiResults.length}</p>
                 </div>
                 <div className="flex justify-between">
-                  <p className="text-sm text-muted-foreground">Generated</p>
+                  <p className="text-sm text-muted-foreground">
+                    Evidence Analyzed
+                  </p>
                   <p className="text-sm font-medium">
-                    April 24, 2025, 11:45 AM
+                    {aiResults.reduce(
+                      (total, result) => total + (result.evidenceId ? 1 : 0),
+                      0
+                    )}
                   </p>
                 </div>
                 <div className="flex justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Processing Time
+                    Average Confidence
                   </p>
-                  <p className="text-sm font-medium">3 minutes, 12 seconds</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Evidence Processed
+                  <p className="text-sm font-medium">
+                    {aiResults.length > 0
+                      ? `${(
+                          (aiResults.reduce(
+                            (total, result) =>
+                              total + (result.confidenceScore || 0),
+                            0
+                          ) /
+                            aiResults.length) *
+                          100
+                        ).toFixed(1)}%`
+                      : "N/A"}
                   </p>
-                  <p className="text-sm font-medium">12 items</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    AI Model Version
-                  </p>
-                  <p className="text-sm font-medium">ISAAC v3.2.1</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Confidence Score
-                  </p>
-                  <p className="text-sm font-medium">92% (High)</p>
                 </div>
               </div>
 
               <div className="flex items-center p-2 bg-green-500/10 rounded-md">
                 <Check className="h-4 w-4 text-green-500 mr-2" />
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  This report has been verified by the ISAAC AI system with high
-                  confidence.
+                  AI analysis completed successfully with {aiResults.length}{" "}
+                  results.
                 </p>
               </div>
             </CardContent>

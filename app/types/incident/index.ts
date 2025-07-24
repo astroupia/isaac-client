@@ -1,22 +1,23 @@
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
 export enum IncidentType {
-  TRAFFIC_COLLISION = 'traffic_collision',
-  PEDESTRIAN_ACCIDENT = 'pedestrian_accident',
-  VEHICLE_FIRE = 'vehicle_fire',
-  HAZMAT_SPILL = 'hazmat_spill',
-  WEATHER_RELATED = 'weather_related',
-  OTHER = 'other',
+  TRAFFIC_COLLISION = "traffic_collision",
+  PEDESTRIAN_ACCIDENT = "pedestrian_accident",
+  VEHICLE_FIRE = "vehicle_fire",
+  HAZMAT_SPILL = "hazmat_spill",
+  WEATHER_RELATED = "weather_related",
+  OTHER = "other",
 }
 
 export enum IncidentSeverity {
-  MINOR = 'minor',
-  MODERATE = 'moderate',
-  MAJOR = 'major',
-  CRITICAL = 'critical',
+  MINOR = "minor",
+  MODERATE = "moderate",
+  MAJOR = "major",
+  CRITICAL = "critical",
 }
 
 export interface IIncident {
+  _id: Types.ObjectId;
   incidentLocation: string;
   incidentType: IncidentType;
   incidentSeverity: IncidentSeverity;

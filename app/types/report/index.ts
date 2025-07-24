@@ -1,22 +1,24 @@
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
+import { IIncident } from "../incident";
 
 export enum ReportStatus {
-  DRAFT = 'draft',
-  SUBMITTED = 'submitted',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  PUBLISHED = 'published',
+  DRAFT = "draft",
+  SUBMITTED = "submitted",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  PUBLISHED = "published",
 }
 
 export enum ReportType {
-  INCIDENT = 'incident',
-  INVESTIGATION = 'investigation',
-  ANALYSIS = 'analysis',
-  SUMMARY = 'summary',
+  INCIDENT = "incident",
+  INVESTIGATION = "investigation",
+  ANALYSIS = "analysis",
+  SUMMARY = "summary",
 }
 
 export interface IReport {
-  incidentId: Types.ObjectId;
+  _id: Types.ObjectId;
+  incidentId: Types.ObjectId | IIncident; // Can be ObjectId or populated incident object
   title: string;
   type: ReportType;
   status: ReportStatus;
