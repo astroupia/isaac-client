@@ -34,7 +34,14 @@ import {
   Legend,
 } from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export function CaseAssignment() {
   const { toast } = useToast();
@@ -44,7 +51,7 @@ export function CaseAssignment() {
 
   useEffect(() => {
     // Fetch investigators using the new userService method
-    userService.getUsersByRole('investigator').then((data) => {
+    userService.getUsersByRole("investigator").then((data) => {
       setInvestigators(data as any[]);
     });
     // Fetch unassigned reports
@@ -71,17 +78,27 @@ export function CaseAssignment() {
       // Remove the assigned case from the UI
       setUnassignedCases((prev) => prev.filter((c) => c._id !== caseId));
       // Update investigator caseload in backend and UI
-      const investigator = investigators.find((inv) => (inv._id || inv.id) === investigatorId);
+      const investigator = investigators.find(
+        (inv) => (inv._id || inv.id) === investigatorId
+      );
       if (investigator) {
         const newCaseload = (investigator.currentCaseload ?? 0) + 1;
-        await userService.updateUser(investigatorId, { currentCaseload: newCaseload });
-        setInvestigators((prev) => prev.map((inv) =>
-          (inv._id || inv.id) === investigatorId ? { ...inv, currentCaseload: newCaseload } : inv
-        ));
+        await userService.updateUser(investigatorId, {
+          currentCaseload: newCaseload,
+        });
+        setInvestigators((prev) =>
+          prev.map((inv) =>
+            (inv._id || inv.id) === investigatorId
+              ? { ...inv, currentCaseload: newCaseload }
+              : inv
+          )
+        );
       }
       toast({
         title: "Case assigned successfully",
-        description: `Case #${caseId} has been assigned to ${investigator?.name || investigatorId}.`,
+        description: `Case #${caseId} has been assigned to ${
+          investigator?.name || investigatorId
+        }.`,
       });
     } catch (error) {
       toast({
@@ -163,17 +180,27 @@ export function CaseAssignment() {
   // When mapping investigators, ensure all fields are present and fallback if missing
   const mappedInvestigators = investigators.map((inv) => ({
     id: inv._id || inv.id,
-    name: inv.firstName && inv.lastName ? `${inv.firstName} ${inv.lastName}` : inv.email,
-    avatar: inv.firstName ? inv.firstName[0] + (inv.lastName ? inv.lastName[0] : "") : "U",
+    name:
+      inv.firstName && inv.lastName
+        ? `${inv.firstName} ${inv.lastName}`
+        : inv.email,
+    avatar: inv.firstName
+      ? inv.firstName[0] + (inv.lastName ? inv.lastName[0] : "")
+      : "U",
     currentCaseload: inv.currentCaseload ?? 0,
     maxCaseload: inv.maxCaseload ?? 5,
     specialization: inv.specialization ?? [],
     completionRate: inv.completionRate ?? 0,
     isActive: inv.isActive ?? true,
-    status: inv.currentCaseload >= inv.maxCaseload ? "overloaded" : inv.currentCaseload / inv.maxCaseload >= 0.8 ? "busy" : "available",
+    status:
+      inv.currentCaseload >= inv.maxCaseload
+        ? "overloaded"
+        : inv.currentCaseload / inv.maxCaseload >= 0.8
+        ? "busy"
+        : "available",
     completedCases: inv.completedCases ?? 0,
     averageResolutionTime: inv.averageResolutionTime ?? null,
-  }))
+  }));
   // Use mappedInvestigators instead of investigators in the UI
 
   return (
@@ -210,7 +237,9 @@ export function CaseAssignment() {
             </CardHeader>
             <CardContent className="space-y-4">
               {unassignedCases.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">No unassigned cases 🎉</div>
+                <div className="text-center text-muted-foreground py-8">
+                  No unassigned cases 🎉
+                </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {unassignedCases.map((caseItem) => (
@@ -220,7 +249,9 @@ export function CaseAssignment() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">#{caseItem._id.slice(-5)}</h4>
+                          <h4 className="font-medium">
+                            #{caseItem._id.slice(-5)}
+                          </h4>
                           {getPriorityBadge(caseItem.priority)}
                         </div>
                         <span className="text-xs text-muted-foreground">
@@ -228,7 +259,9 @@ export function CaseAssignment() {
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-lg">{caseItem.title}</h3>
+                        <h3 className="font-medium text-lg">
+                          {caseItem.title}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
                           {caseItem.description}
                         </p>
@@ -243,24 +276,42 @@ export function CaseAssignment() {
                           </SelectTrigger>
                           <SelectContent>
                             {mappedInvestigators.length === 0 ? (
-                              <div className="px-4 py-2 text-muted-foreground text-sm">No investigators available</div>
+                              <div className="px-4 py-2 text-muted-foreground text-sm">
+                                No investigators available
+                              </div>
                             ) : (
                               mappedInvestigators.map((investigator) => (
                                 <SelectItem
                                   key={investigator.id}
                                   value={investigator.id}
-                                  disabled={investigator.status === "overloaded"}
+                                  disabled={
+                                    investigator.status === "overloaded"
+                                  }
                                 >
                                   <div className="flex items-center space-x-2">
                                     <Avatar className="h-6 w-6 ring-2 ring-muted-foreground">
-                                      <AvatarImage src="/placeholder-user.jpg" alt={investigator.name} />
-                                      <AvatarFallback>{investigator.avatar}</AvatarFallback>
+                                      <AvatarImage
+                                        src="/placeholder-user.jpg"
+                                        alt={investigator.name}
+                                      />
+                                      <AvatarFallback>
+                                        {investigator.avatar}
+                                      </AvatarFallback>
                                     </Avatar>
                                     <span>{investigator.name}</span>
                                     <span className="text-xs text-muted-foreground">
-                                      ({investigator.currentCaseload}/{investigator.maxCaseload})
+                                      ({investigator.currentCaseload}/
+                                      {investigator.maxCaseload})
                                     </span>
-                                    <span className={`inline-block w-2 h-2 rounded-full ${investigator.status === "available" ? "bg-green-500 dark:bg-green-400" : investigator.status === "busy" ? "bg-yellow-500 dark:bg-yellow-400" : "bg-red-500 dark:bg-red-400"}`}></span>
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full ${
+                                        investigator.status === "available"
+                                          ? "bg-green-500 dark:bg-green-400"
+                                          : investigator.status === "busy"
+                                          ? "bg-yellow-500 dark:bg-yellow-400"
+                                          : "bg-red-500 dark:bg-red-400"
+                                      }`}
+                                    ></span>
                                   </div>
                                 </SelectItem>
                               ))
@@ -299,27 +350,50 @@ export function CaseAssignment() {
             <table className="min-w-full text-sm border rounded-lg bg-card">
               <thead>
                 <tr className="bg-muted text-muted-foreground">
-                  <th className="px-4 py-2 text-left font-medium">Investigator</th>
+                  <th className="px-4 py-2 text-left font-medium">
+                    Investigator
+                  </th>
                   <th className="px-4 py-2 text-left font-medium">Status</th>
                   <th className="px-4 py-2 text-left font-medium">Caseload</th>
-                  <th className="px-4 py-2 text-left font-medium">Completion</th>
+                  <th className="px-4 py-2 text-left font-medium">
+                    Completion
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {mappedInvestigators.map((inv, idx) => (
-                  <tr key={inv.id} className={idx % 2 === 0 ? "bg-background" : "bg-muted/50"}>
+                  <tr
+                    key={inv.id}
+                    className={idx % 2 === 0 ? "bg-background" : "bg-muted/50"}
+                  >
                     <td className="px-4 py-2 flex items-center gap-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="/placeholder-user.jpg" alt={inv.name} />
+                        <AvatarImage
+                          src="/placeholder-user.jpg"
+                          alt={inv.name}
+                        />
                         <AvatarFallback>{inv.avatar}</AvatarFallback>
                       </Avatar>
                       <span className="font-medium">{inv.name}</span>
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`inline-block w-2 h-2 rounded-full mr-2 align-middle ${inv.status === "available" ? "bg-green-500 dark:bg-green-400" : inv.status === "busy" ? "bg-yellow-500 dark:bg-yellow-400" : "bg-red-500 dark:bg-red-400"}`}></span>
-                      <span className="text-xs text-muted-foreground">{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full mr-2 align-middle ${
+                          inv.status === "available"
+                            ? "bg-green-500 dark:bg-green-400"
+                            : inv.status === "busy"
+                            ? "bg-yellow-500 dark:bg-yellow-400"
+                            : "bg-red-500 dark:bg-red-400"
+                        }`}
+                      ></span>
+                      <span className="text-xs text-muted-foreground">
+                        {inv.status.charAt(0).toUpperCase() +
+                          inv.status.slice(1)}
+                      </span>
                     </td>
-                    <td className="px-4 py-2">{inv.currentCaseload} / {inv.maxCaseload}</td>
+                    <td className="px-4 py-2">
+                      {inv.currentCaseload} / {inv.maxCaseload}
+                    </td>
                     <td className="px-4 py-2 w-48">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-muted-foreground/10 rounded-full h-2">
@@ -328,7 +402,9 @@ export function CaseAssignment() {
                             style={{ width: `${inv.completionRate}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium w-10 text-right">{inv.completionRate}%</span>
+                        <span className="text-xs font-medium w-10 text-right">
+                          {inv.completionRate}%
+                        </span>
                       </div>
                     </td>
                   </tr>
@@ -356,27 +432,51 @@ export function CaseAssignment() {
             <CardContent>
               <div className="flex gap-4 overflow-x-auto pb-4 w-full">
                 {mappedInvestigators.map((inv) => (
-                  <div key={inv.id} className="min-w-[280px] max-w-xs flex-1 p-4 border rounded-lg bg-muted/50 flex flex-col gap-2 shadow hover:shadow-xl transition-shadow duration-200">
+                  <div
+                    key={inv.id}
+                    className="min-w-[280px] max-w-xs flex-1 p-4 border rounded-lg bg-muted/50 flex flex-col gap-2 shadow hover:shadow-xl transition-shadow duration-200"
+                  >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src="/placeholder-user.jpg" alt={inv.name} />
+                        <AvatarImage
+                          src="/placeholder-user.jpg"
+                          alt={inv.name}
+                        />
                         <AvatarFallback>{inv.avatar}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-semibold text-base flex items-center gap-2">{inv.name}
-                          <span className={`inline-block w-2 h-2 rounded-full ${inv.status === "available" ? "bg-green-500 dark:bg-green-400" : inv.status === "busy" ? "bg-yellow-500 dark:bg-yellow-400" : "bg-red-500 dark:bg-red-400"}`}></span>
+                        <div className="font-semibold text-base flex items-center gap-2">
+                          {inv.name}
+                          <span
+                            className={`inline-block w-2 h-2 rounded-full ${
+                              inv.status === "available"
+                                ? "bg-green-500 dark:bg-green-400"
+                                : inv.status === "busy"
+                                ? "bg-yellow-500 dark:bg-yellow-400"
+                                : "bg-red-500 dark:bg-red-400"
+                            }`}
+                          ></span>
                         </div>
-                        <div className="text-xs text-muted-foreground">{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {inv.status.charAt(0).toUpperCase() +
+                            inv.status.slice(1)}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm mt-2">
                       <span>Caseload</span>
-                      <span>{inv.currentCaseload} / {inv.maxCaseload}</span>
+                      <span>
+                        {inv.currentCaseload} / {inv.maxCaseload}
+                      </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="h-2 rounded-full bg-primary"
-                        style={{ width: `${(inv.currentCaseload / inv.maxCaseload) * 100}%` }}
+                        style={{
+                          width: `${
+                            (inv.currentCaseload / inv.maxCaseload) * 100
+                          }%`,
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm mt-2">
@@ -390,14 +490,47 @@ export function CaseAssignment() {
                       />
                     </div>
                     <details className="mt-2">
-                      <summary className="cursor-pointer text-xs text-blue-600">Details</summary>
+                      <summary className="cursor-pointer text-xs text-blue-600">
+                        Details
+                      </summary>
                       <div className="mt-2 text-xs space-y-1">
-                        <div>Completed Cases: <span className="font-medium">{inv.completedCases ?? 0}</span></div>
-                        <div>Avg. Resolution: <span className="font-medium">{inv.averageResolutionTime ?? '-'}</span> days</div>
-                        <div>Specializations: {inv.specialization.length > 0 ? inv.specialization.map((spec: string, i: number) => (
-                          <Badge key={i} variant="outline" className="text-xs ml-1">{spec}</Badge>
-                        )) : <span className="text-muted-foreground">None</span>}</div>
-                        <div>Status: <span className="font-medium">{inv.isActive ? 'Active' : 'Inactive'}</span></div>
+                        <div>
+                          Completed Cases:{" "}
+                          <span className="font-medium">
+                            {inv.completedCases ?? 0}
+                          </span>
+                        </div>
+                        <div>
+                          Avg. Resolution:{" "}
+                          <span className="font-medium">
+                            {inv.averageResolutionTime ?? "-"}
+                          </span>{" "}
+                          days
+                        </div>
+                        <div>
+                          Specializations:{" "}
+                          {inv.specialization.length > 0 ? (
+                            inv.specialization.map(
+                              (spec: string, i: number) => (
+                                <Badge
+                                  key={i}
+                                  variant="outline"
+                                  className="text-xs ml-1"
+                                >
+                                  {spec}
+                                </Badge>
+                              )
+                            )
+                          ) : (
+                            <span className="text-muted-foreground">None</span>
+                          )}
+                        </div>
+                        <div>
+                          Status:{" "}
+                          <span className="font-medium">
+                            {inv.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </div>
                       </div>
                     </details>
                   </div>
@@ -410,12 +543,16 @@ export function CaseAssignment() {
                     datasets: [
                       {
                         label: "Current Caseload",
-                        data: mappedInvestigators.map((inv) => inv.currentCaseload),
+                        data: mappedInvestigators.map(
+                          (inv) => inv.currentCaseload
+                        ),
                         backgroundColor: "#3b82f6",
                       },
                       {
                         label: "Completed Cases",
-                        data: mappedInvestigators.map((inv) => inv.completedCases ?? 0),
+                        data: mappedInvestigators.map(
+                          (inv) => inv.completedCases ?? 0
+                        ),
                         backgroundColor: "#10b981",
                       },
                     ],
@@ -436,7 +573,7 @@ export function CaseAssignment() {
         </div>
       </div>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Assignment Recommendations</CardTitle>
           <CardDescription>
@@ -484,7 +621,7 @@ export function CaseAssignment() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
